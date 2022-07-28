@@ -24,6 +24,8 @@ module.exports = {
   DEGRADED: 'Degraded',
   PROGRESSING: 'Progressing',
   SYNCED: 'Synced',
+  MISSING: 'Missing',
+  SUSPENDED: '중단됨',
   OUTOFSYNC: 'Out of sync',
   DEPLOY_LOCATION: 'Deployment Location',
   // List > Create

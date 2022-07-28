@@ -23,7 +23,7 @@ import withList, { ListPage } from 'components/HOCs/withList'
 
 import { Avatar } from 'components/Base'
 import Banner from 'components/Cards/Banner'
-import CDStore from 'stores/codeRepo'
+import CodeStore from 'stores/codeRepo'
 import Table from 'components/Tables/List'
 
 import { getLocalTime, capitalize, getDisplayName } from 'utils'
@@ -32,7 +32,7 @@ import { omit } from 'lodash'
 import styles from './index.scss'
 
 @withList({
-  store: new CDStore(),
+  store: new CodeStore(),
   module: 'codeRepos',
   name: 'CODE_REPO',
   rowKey: 'name',
@@ -113,6 +113,7 @@ export default class CRList extends React.Component {
             type: 'CODE_REPO',
             detail: record,
             devops: this.devops,
+            cluster: this.cluster,
             success: routing.query,
           })
         },
@@ -160,7 +161,11 @@ export default class CRList extends React.Component {
             <Avatar
               className={styles.avatar}
               to={''}
-              icon={record.provider}
+              icon={
+                record.provider === 'bitbucket_server'
+                  ? 'bitbucket'
+                  : record.provider
+              }
               iconSize={40}
               desc={record.description}
               title={getDisplayName(record)}
@@ -174,7 +179,9 @@ export default class CRList extends React.Component {
         isHideable: true,
         width: '20%',
         render: provider => {
-          return capitalize(provider)
+          return capitalize(
+            provider === 'bitbucket_server' ? 'bitbucket' : provider
+          )
         },
       },
       {

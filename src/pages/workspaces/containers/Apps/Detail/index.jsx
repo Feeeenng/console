@@ -146,20 +146,23 @@ export default class RoleDetail extends React.Component {
 
     return [
       {
-        name: t('APP_ID'),
-        value: detail.app_id,
-      },
-      {
         name: t('STATUS'),
         value: transferAppStatus(detail.status),
       },
       {
-        name: t('CATEGORY'),
-        value: getAppCategoryNames(get(detail, 'category_set', [])),
-      },
-      {
         name: t('TYPE'),
         value: getVersionTypesName(get(detail, 'app_version_types', '')),
+      },
+      {
+        name: t('CATEGORY'),
+        value: t(
+          `APP_CATE_${getAppCategoryNames(get(detail, 'category_set', []))
+            .toUpperCase()
+            .replace(/[^A-Z]+/g, '_')}`,
+          {
+            defaultValue: getAppCategoryNames(get(detail, 'category_set', [])),
+          }
+        ),
       },
       {
         name: t('WORKSPACE'),

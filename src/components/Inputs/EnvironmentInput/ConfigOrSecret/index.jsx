@@ -66,6 +66,17 @@ export default class AddConfigOrSecret extends Component {
         }))
   }
 
+  get style() {
+    const { showModal, getParentPosition } = this.props
+    const modalPosition = getParentPosition()
+    return showModal
+      ? {
+          top: modalPosition.y,
+          left: `calc(${modalPosition.x}px - 12px)`,
+        }
+      : {}
+  }
+
   settingKeys = () => {
     const { configMaps, secrets } = this.props
     const { tab, name } = this.state
@@ -158,13 +169,16 @@ export default class AddConfigOrSecret extends Component {
   }
 
   render() {
-    const { className, style } = this.props
+    const { className } = this.props
     const { tab, allChoose, name, list } = this.state
 
     return (
-      <div className={classNames(className, styles.contentBox)} style={style}>
+      <div
+        className={classNames(className, styles.contentBox)}
+        style={this.style}
+      >
         <div className={styles.content}>
-          <apn className={styles.title}>{t('BATCH_REFERENCE')}</apn>
+          <span className={styles.title}>{t('BATCH_REFERENCE')}</span>
           <Alert
             className={styles.tip}
             message={t('BATCH_REFERENCE_DESC')}

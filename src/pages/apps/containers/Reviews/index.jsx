@@ -28,7 +28,7 @@ import ReviewStore from 'stores/openpitrix/review'
 import { REVIEW_QUERY_STATUS } from 'configs/openpitrix/app'
 import { getLocalTime } from 'utils'
 import { transferReviewStatus } from 'utils/app'
-
+import { find } from 'lodash'
 import styles from './index.scss'
 
 @withList({
@@ -49,11 +49,11 @@ export default class Reviews extends React.Component {
       options: [
         {
           value: 'unprocessed',
-          label: t('UNRELEASED'),
+          label: t('NEW_SUBMIT'),
         },
         {
           value: 'processed',
-          label: t('RELEASED'),
+          label: t('COMPLETED'),
         },
         {
           value: 'all',
@@ -136,14 +136,16 @@ export default class Reviews extends React.Component {
       title: t('WORKSPACE'),
       dataIndex: 'app_id',
       isHideable: true,
-      width: '10%',
-      render: appId => this.getAppISV(appId),
+      width: '15%',
+      render: appId => {
+        return this.getAppISV(appId)
+      },
     },
     {
       title: t('OPERATOR'),
       dataIndex: 'reviewer',
       isHideable: true,
-      width: '10%',
+      width: '15%',
     },
     {
       title: t('STATUS'),
@@ -175,9 +177,7 @@ export default class Reviews extends React.Component {
   get emptyProps() {
     return {
       icon: 'safe-notice',
-      title: t('EMPTY_WRAPPER', {
-        resource: t(`${this.type.toUpperCase()}_APP_RELEASE`),
-      }),
+      title: t(`APP_REVIEW_${this.type.toUpperCase()}_EMPTY_DESC`),
     }
   }
 
@@ -189,8 +189,8 @@ export default class Reviews extends React.Component {
           {...bannerProps}
           tabs={this.tabs}
           icon="safe-notice"
-          title={t('APP_RELEASE')}
-          description={t('APP_RELEASE_DESC')}
+          title={t('APP_REVIEW')}
+          description={t('APP_REVIEW_DESC')}
         />
         <Table
           {...tableProps}

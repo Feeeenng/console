@@ -69,7 +69,11 @@ export default class CDDetail extends React.Component {
 
   fetchData = () => {
     const { params } = this.props.match
-    this.store.fetchDetail({ name: params.cd, devops: params.devops })
+    this.store.fetchDetail({
+      name: params.cd,
+      devops: this.devops,
+      cluster: this.cluster,
+    })
   }
 
   componentDidMount() {
@@ -86,7 +90,7 @@ export default class CDDetail extends React.Component {
       onClick: () => {
         this.trigger('resource.baseinfo.edit', {
           formTemplate: this.store.detail,
-          detail: this.store.detail,
+          detail: { ...this.store.detail, cluster: this.cluster },
           success: this.fetchData,
         })
       },
@@ -101,6 +105,7 @@ export default class CDDetail extends React.Component {
           title: t('SYNC_RESOURCE'),
           formTemplate: pick(toJS(this.store.detail), 'repoSource'),
           devops: this.devops,
+          cluster: this.cluster,
           noCodeEdit: true,
           application: this.store.detail.name,
           success: this.fetchData,
@@ -114,7 +119,7 @@ export default class CDDetail extends React.Component {
       action: 'edit',
       onClick: () => {
         this.trigger('resource.yaml.edit', {
-          detail: this.store.detail,
+          detail: { ...this.store.detail, cluster: this.cluster },
           success: this.fetchData,
         })
       },
@@ -127,7 +132,7 @@ export default class CDDetail extends React.Component {
       onClick: () => {
         this.trigger('cd.delete', {
           type: 'CONTINUOUS_DEPLOYMENT',
-          detail: this.store.detail,
+          detail: { ...this.store.detail, cluster: this.cluster },
           success: () => this.routing.push(this.listUrl),
         })
       },
@@ -136,6 +141,7 @@ export default class CDDetail extends React.Component {
 
   getAttrs = () => {
     const { detail } = this.store
+    const reconciledAt = get(detail, 'status.reconciledAt')
 
     return [
       {
@@ -175,9 +181,9 @@ export default class CDDetail extends React.Component {
       },
       {
         name: t('UPDATE_TIME_TCAP'),
-        value: getLocalTime(get(detail, 'status.reconciledAt')).format(
-          'YYYY-MM-DD HH:mm:ss'
-        ),
+        value: reconciledAt
+          ? getLocalTime(reconciledAt).format('YYYY-MM-DD HH:mm:ss')
+          : '-',
       },
       {
         name: t('CREATOR'),
@@ -191,7 +197,7 @@ export default class CDDetail extends React.Component {
     const stores = { detailStore: this.store }
 
     const sideProps = {
-      module: 'cds',
+      module: 'applications',
       name: getDisplayName(detail),
       desc: detail.description,
       operations: this.getOperations(),

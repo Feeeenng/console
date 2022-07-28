@@ -21,6 +21,9 @@ module.exports = {
   // More > Edit Settings > Update Strategy
   // More > Edit Settings > Containers
   // More > Edit Settings > Volumes
+  PLEASE_USE_RELATIVE_PATH: 'Lütfen göreli bir yol kullanın.',
+  RELATIVE_PATH_NOT_SUPPORT: 'Desteklenmeyen göreli yol biçimi.',
+  MOUNT_PATH_INCORRECT: 'Yanlış bağlama yolu.',
   // More > Edit Settings > Pod Scheduling Rules
   // More > Edit Settings > Cluster Differences
   // More > Edit YAML
@@ -32,5 +35,5 @@ module.exports = {
   // Metadata
   // Monitoring
   // Events
-  REASON: 'Neden'
+  REASON: 'Sebep'
 };

@@ -29,13 +29,14 @@ module.exports = {
   BASIC_INFORMATION: 'Información básica',
   NAME: 'Nombre',
   FEDPROJECT_RESOURCE_TIP: 'No se pueden crear recursos de proyectos de múltiples clústeres en la administración de clústeres, vaya a la página del proyecto de múltiples clústeres para operar.',
-  FINISHED: 'Finalizado',
-  NOT_SET: 'Sin definir',
+  FINISHED: 'Done',
+  NOT_SET: 'To do',
   CURRENT: 'Current',
   PROJECT: 'Proyecto',
   // List > Create > Pod Settings
   PREVIOUS: 'Anterior',
   NOTE: 'Advertencia',
+  CREATE_CONFIGMAP_SECRET_DESC: 'If no configmap or secret meets the requirements, you can',
   // List > Create > Pod Settings > Add Container > Container Settings
   IMAGE: 'Imagen',
   IMAGE_VALUE: 'Imagen: {value}',

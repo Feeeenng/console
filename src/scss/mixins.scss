@@ -24,6 +24,7 @@
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: $line;
+  /*! autoprefixer: ignore next */
   -webkit-box-orient: vertical;
 }
 
@@ -117,7 +118,7 @@
 }
 
 @mixin TypographyParagraphCode($color: #363e4a) {
-  font-family: 'Monaco';
+  font-family: 'Monaco', sans-serif;
   font-size: $size-small;
   font-weight: normal;
   font-style: normal;

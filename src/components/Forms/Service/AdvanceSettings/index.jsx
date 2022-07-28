@@ -24,6 +24,7 @@ import { Form } from '@kube-design/components'
 import { NumberInput } from 'components/Inputs'
 import PodIPRange from 'components/Forms/Workload/AdvanceSettings/PodIPRange'
 
+import { toJS } from 'mobx'
 import Metadata from './Metadata'
 import NodeSchedule from './NodeSchedule'
 import InternetAccess from './InternetAccess'
@@ -40,6 +41,13 @@ export default class AdvancedSettings extends React.Component {
   get kind() {
     const { module } = this.props
     return MODULE_KIND_MAP[module]
+  }
+
+  get clusters() {
+    const { projectDetail, cluster, isFederated } = this.props
+    return isFederated
+      ? toJS(projectDetail.clusters).map(item => item.name)
+      : [cluster]
   }
 
   handleLabelsChange = labels => {
@@ -105,12 +113,13 @@ export default class AdvancedSettings extends React.Component {
             <InternetAccess
               formTemplate={formTemplate}
               isFederated={isFederated}
+              clusters={this.clusters}
             />
           </Form.Group>
         )}
         <Form.Group
-          label={t('STICKY_SESSION')}
-          desc={t('STICKY_SESSION_DESC')}
+          label={t('SESSION_PERSISTENCE')}
+          desc={t('SESSION_PERSISTENCE_DESC')}
           onChange={this.handleSessionAffinityChange}
           checkable
         >

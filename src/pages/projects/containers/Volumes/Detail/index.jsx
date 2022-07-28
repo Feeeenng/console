@@ -22,9 +22,9 @@ import { observer, inject } from 'mobx-react'
 import { Loading } from '@kube-design/components'
 
 import { Status } from 'components/Base'
-import { getDisplayName, getLocalTime } from 'utils'
+import { getDisplayName, getLocalTime, compareVersion } from 'utils'
 import { trigger } from 'utils/action'
-import { toJS } from 'mobx'
+import { toJS, observable } from 'mobx'
 import Volume from 'stores/volume'
 import StorageClass from 'stores/storageClass'
 
@@ -39,6 +39,9 @@ export default class VolumeDetail extends React.Component {
   store = new Volume()
 
   storageclass = new StorageClass()
+
+  @observable
+  ksVersion = ''
 
   componentDidMount() {
     this.fetchData()
@@ -74,12 +77,15 @@ export default class VolumeDetail extends React.Component {
     return this.store.detail.isFedManaged
   }
 
-  get allowClone() {
-    return this.getAllowToDo('storageclass.kubesphere.io/allow-clone')
+  get disableClone() {
+    return this.getDisAllowToDo('storageclass.kubesphere.io/allow-clone')
   }
 
-  get allowSnapshot() {
-    return this.getAllowToDo('storageclass.kubesphere.io/allow-snapshot')
+  get disableSnapshot() {
+    return (
+      compareVersion(`${this.ksVersion}`, 'v3.3') < 0 ||
+      this.getDisAllowToDo('storageclass.kubesphere.io/allow-snapshot')
+    )
   }
 
   get allowExpand() {
@@ -88,7 +94,7 @@ export default class VolumeDetail extends React.Component {
     return isPending ? true : !value
   }
 
-  getAllowToDo = key => {
+  getDisAllowToDo = key => {
     try {
       const value = toJS(this.storageclass).detail.annotations[key]
       const isPending = this.store.detail.phase === 'Pending'
@@ -99,7 +105,8 @@ export default class VolumeDetail extends React.Component {
   }
 
   fetchData = async () => {
-    const { cluster } = this.props.match.params
+    const { params } = this.props.match
+    const { cluster } = params
     await this.store.fetchDetail(this.props.match.params)
 
     const { storageClassName } = this.store.detail
@@ -108,6 +115,7 @@ export default class VolumeDetail extends React.Component {
       name: storageClassName,
     })
     await this.store.getSnapshotType()
+    this.ksVersion = await this.store.getKsVersion(params)
   }
 
   getOperations = () => [
@@ -140,7 +148,7 @@ export default class VolumeDetail extends React.Component {
       text: t('CLONE'),
       icon: 'copy',
       action: 'create',
-      disabled: this.allowClone,
+      disabled: this.disableClone,
       onClick: () => {
         this.trigger('volume.clone', {})
       },
@@ -151,7 +159,7 @@ export default class VolumeDetail extends React.Component {
       text: t('CREATE_SNAPSHOT'),
       icon: 'copy',
       action: 'create',
-      disabled: this.allowSnapshot,
+      disabled: this.disableSnapshot,
       onClick: () => {
         this.trigger('volume.create.snapshot', {
           detail: this.store.detail,

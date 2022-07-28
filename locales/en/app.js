@@ -25,8 +25,6 @@ module.exports = {
   'App Deploy': 'App Deploy',
   'App Introduction': 'App Introduction',
   'App Name': 'App Name',
-  APP_REVIEW: 'App Review',
-  APP_REVIEWS: 'App Reviews',
   'App Version': 'App Version',
   'App Version Types': 'App Version Types',
   'Application Name': 'App Name',
@@ -109,8 +107,6 @@ module.exports = {
   RESOURCE_TOOL_DESCRIPTION: 'KubeSphere provides a visual resource orchestration tool that allows you to' +
     ' create application templates and deploy tests through resource pre-editing',
   HELM_DEVELOP_GUIDE: ' Helm Specifications.',
-  APP_CATE_All: 'All',
-  APP_CATE_UNCATEGORIZED: 'Uncategorized',
   ICON_DESC: 'Please select an icon to identify the classification',
   MODIFY_VERSION_TIPS: 'Every modification will follow the next release and take effect.',
   UNDER_REVIEW_TIPS: 'The current version of the application is under review,' +
@@ -124,23 +120,14 @@ module.exports = {
   FILE_MAX_ICON: 'Icon size should not exceed 20KB',
   REVIEWS_CREATE_DESC: 'There is no relevant application review data',
   NO_DEPLOY_RUNTIME_NOTE: 'The project has no available deploy runtime',
-  UNPROCESSED_APP_RELEASE: 'Unreleased App',
-  PROCESSED_APP_RELEASE: 'Released App',
-  ALL_APP_RELEASE: 'Release Record',
-  'APP_CATE_MESSAGE QUEUEING': 'Message Queuing',
-  'APP_CATE_IMAGE REGISTRY': 'Image Registry',
-  'APP_CATE_PROMETHEUS EXPORTER': 'Prometheus Exporter',
-  'APP_CATE_WEB SERVER': 'Web Server',
-  APP_CATE_NETWORKING: 'Networking',
-  'APP_CATE_DATABASE & CACHE': 'Database & Cache',
-  APP_CATE_STORAGE: 'Storage',
+  APP_REVIEW_PROCESSED_EMPTY_DESC: 'No Review Record Found',
+  APP_REVIEW_ALL_EMPTY_DESC: 'No App Found',
   // App Review
   REVIEW: 'Review',
   PENDING_REVIEW: 'Pending',
   COMPLETE_REVIEW: 'Complete',
   SERVICE_PROVIDER: 'Service provider',
   // App Store
-  CATEGORIES: 'Categories',
   UPDATE_TIME_COLON: 'Update time: ',
   DEVELOPER: 'Developer',
   // App Categories

@@ -21,5 +21,6 @@ module.exports = {
   APP_STORE_MANAGEMENT: 'Uygulama Mağazası Yönetimi',
   APP_STORE_DESC: 'Uygulama Mağazası\' ndaki uygulamaları yönetin. Uygulama bilgilerini görüntüleyebilir, uygulamaları yayınlayabilir ve uygulamaları askıya alabilirsiniz.',
   // List
-  APP_CATEGORY: 'Uygulama Kategorisi'
+  APP_CATEGORY: 'Uygulama Kategorisi',
+  APP_EMPTY_DESC: 'Lütfen bir çalışma alanında bir uygulama şablonu oluşturun ve bunu App Store\'a bırakın.'
 };

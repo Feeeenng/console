@@ -22,6 +22,15 @@ module.exports = {
   DISCOVER: 'Keşfet',
   NEW_APPS: 'Yeni Uygulama',
   // App Categories
+  APP_CATE_ALL: 'Hepsi',
+  APP_CATE_UNCATEGORIZED: 'Kategorisiz',
+  APP_CATE_MESSAGE_QUEUEING: 'Mesaj sıraya alma',
+  APP_CATE_IMAGE_REGISTRY: 'Görüntü Kaydı',
+  APP_CATE_PROMETHEUS_EXPORTER: 'Prometheus sunucu',
+  APP_CATE_WEB_SERVER: 'Web Sunucu',
+  APP_CATE_NETWORKING: 'Ağ',
+  APP_CATE_DATABASE_CACHE: 'Veritabanı ön belleği',
+  APP_CATE_STORAGE: 'Depolama',
   // List
   MAINTAINER_VALUE: 'Geliştirici: {değer}',
   LATEST_VALUE: 'Son sürüm: {değer}',

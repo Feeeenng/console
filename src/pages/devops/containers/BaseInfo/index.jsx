@@ -16,18 +16,23 @@
  * along with KubeSphere Console.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { isEmpty, cloneDeep } from 'lodash'
+import { get, isEmpty, cloneDeep, isObject, set } from 'lodash'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import classNames from 'classnames'
 import { toJS } from 'mobx'
 import { observer, inject } from 'mobx-react'
 import { Icon, Button, Notify, Dropdown, Menu } from '@kube-design/components'
-import { Panel } from 'components/Base'
+import { Panel, Avatar } from 'components/Base'
 import DeleteModal from 'components/Modals/Delete'
 import Banner from 'components/Cards/Banner'
 import Empty from 'components/Tables/Base/Empty'
-import { inCluster2Default, getDisplayName, getLocalTime } from 'utils'
+import {
+  inCluster2Default,
+  getDisplayName,
+  getLocalTime,
+  compareVersion,
+} from 'utils'
 import EditModal from 'devops/components/Modals/DevOpsEdit'
 
 import { trigger } from 'utils/action'
@@ -43,6 +48,7 @@ class BaseInfo extends React.Component {
   state = {
     showEdit: false,
     showDelete: false,
+    opened: false,
   }
 
   roleStore = new RoleStore()
@@ -61,6 +67,28 @@ class BaseInfo extends React.Component {
         cluster: this.cluster,
       })
     }
+
+    this.setState({
+      opened: !(
+        isEmpty(this.detail.sourceRepos) && isEmpty(this.detail.destinations)
+      ),
+    })
+  }
+
+  get isMultiCluster() {
+    return globals.ksConfig.multicluster
+  }
+
+  get clusterVersion() {
+    return this.isMultiCluster
+      ? get(globals, `clusterConfig.${this.cluster}.ksVersion`)
+      : get(globals, 'ksConfig.ksVersion')
+  }
+
+  get isNeedHide() {
+    return (
+      compareVersion(this.clusterVersion, '3.3.0') < 0 || !this.isHostCluster
+    )
   }
 
   get routing() {
@@ -85,6 +113,13 @@ class BaseInfo extends React.Component {
 
   get cluster() {
     return this.props.match.params.cluster
+  }
+
+  get isHostCluster() {
+    return (
+      !globals.app.isMultiCluster ||
+      this.cluster === this.props.devopsStore.hostName
+    )
   }
 
   get enabledActions() {
@@ -134,6 +169,10 @@ class BaseInfo extends React.Component {
     return this.itemActions.filter(
       item => !item.action || this.enabledActions.includes(item.action)
     )
+  }
+
+  get detail() {
+    return this.store.data
   }
 
   hideEdit = () => {
@@ -196,11 +235,18 @@ class BaseInfo extends React.Component {
       store: this.store,
       cluster: this.cluster,
       workspace: this.workspace,
-      detail: cloneDeep(this.store.data),
-      success: () => {
-        this.store.fetchDetail({
+      detail: this.detail,
+      success: async () => {
+        await this.store.fetchDetail({
           workspace: this.workspace,
           ...this.props.match.params,
+        })
+
+        this.setState({
+          opened: !(
+            isEmpty(this.detail.sourceRepos) &&
+            isEmpty(this.detail.destinations)
+          ),
         })
       },
     })
@@ -219,7 +265,6 @@ class BaseInfo extends React.Component {
   }
 
   renderBaseInfo() {
-    const detail = this.store.data
     const roleCount = this.roleStore.list.total
     const memberCount = this.memberStore.list.total
 
@@ -228,7 +273,7 @@ class BaseInfo extends React.Component {
         <div className={styles.header}>
           <Icon name="strategy-group" size={40} />
           <div className={styles.item}>
-            <div>{getDisplayName(detail)}</div>
+            <div>{getDisplayName(this.detail)}</div>
             <p>{t('DEVOPS_PROJECT_SCAP')}</p>
           </div>
           <div className={styles.item}>
@@ -238,12 +283,14 @@ class BaseInfo extends React.Component {
             <p>{t('WORKSPACE')}</p>
           </div>
           <div className={styles.item}>
-            <div>{detail.creator || '-'}</div>
+            <div>{this.detail.creator || '-'}</div>
             <p>{t('CREATOR')}</p>
           </div>
           <div className={styles.item}>
             <div>
-              {getLocalTime(detail.createTime).format(`YYYY-MM-DD HH:mm:ss`)}
+              {getLocalTime(this.detail.createTime).format(
+                `YYYY-MM-DD HH:mm:ss`
+              )}
             </div>
             <p>{t('CREATION_TIME')}</p>
           </div>
@@ -309,18 +356,127 @@ class BaseInfo extends React.Component {
     )
   }
 
+  renderItem(type) {
+    const data = this.detail[type]
+
+    if (isEmpty(data)) {
+      return (
+        <div className={styles.item_tag}>
+          {type === 'sourceRepos'
+            ? t('CODE_REPOSITORY_NOT_SELECTED')
+            : t('RESOURCE_DEPLOYMENT_LOCATION_NOT_SELECTED')}
+        </div>
+      )
+    }
+
+    const isAll =
+      data.length === 1 &&
+      data.every(item => {
+        if (isObject(item)) {
+          return Object.keys(item).every(key => item[key] === '*')
+        }
+        return item === '*'
+      })
+
+    if (isAll) {
+      return (
+        <div className={styles.item_tag}>
+          {type === 'sourceRepos'
+            ? t('ALL_CODE_REPOSITORIES')
+            : t('ALL_RESOURCE_DEPLOYMENT_LOCATIONS')}
+        </div>
+      )
+    }
+
+    return type === 'sourceRepos' ? (
+      <div className={styles.items}>
+        {this.detail.sourceRepos.map(repo => (
+          <div key={repo} className={styles.item}>
+            {repo === '*' ? t('All') : repo}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className={styles.items}>
+        {this.detail.destinations.map((destination, index) => (
+          <div key={index} className={`${styles.item} ${styles.item_flex}`}>
+            <div>
+              <Icon name="cluster" size={20} />
+              <b>
+                {destination.name === '*'
+                  ? t('All')
+                  : inCluster2Default(destination.name)}
+              </b>
+              {destination?.name !== '*' && (
+                <span>({destination?.server})</span>
+              )}
+            </div>
+            <div>
+              <Icon name="enterprise" size={20} />
+              <b>
+                {destination?.namespace === '*'
+                  ? t('All')
+                  : destination?.namespace}
+              </b>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  toggle = async () => {
+    const { opened } = this.state
+
+    if (opened) {
+      const newData = get(cloneDeep(toJS(this.detail)), '_originData.spec', {})
+
+      set(newData, 'argo.destinations', [])
+      set(newData, 'argo.sourceRepos', [])
+
+      await this.store.editAllowlist(this.store.data, { spec: newData })
+
+      await this.store.fetchDetail({
+        workspace: this.workspace,
+        ...this.props.match.params,
+      })
+    }
+
+    this.setState({
+      opened: !opened,
+    })
+  }
+
   renderCD() {
-    const detail = this.store.data
+    const { opened } = this.state
 
     return (
       <Panel className={styles.wrapper} title={t('CD_ALLOWLIST')}>
-        {isEmpty(detail.sourceRepos) && isEmpty(detail.destinations) ? (
+        {isEmpty(this.detail.sourceRepos) &&
+        isEmpty(this.detail.destinations) ? (
           this.renderEmptyCD()
         ) : (
           <>
-            <div className={styles.header}>
+            <div className={styles.cd_header}>
+              <Avatar
+                icon="allowlist"
+                iconSize={40}
+                title={opened ? t('ENABLED') : t('DISABLED')}
+                desc={t('CD_ALLOWLIST_SCAP')}
+              />
+
               {!isEmpty(this.enabledItemActions) && (
                 <div className={classNames(styles.item, 'text-right')}>
+                  <div
+                    className={classNames(
+                      styles.toggle,
+                      opened ? '' : styles.closed
+                    )}
+                    onClick={this.toggle}
+                  >
+                    <span>{opened ? t('ENABLED') : t('DISABLED')}</span>
+                    <label className={styles.toggleop} />
+                  </div>
                   <Button onClick={this.handleEditAllowlist}>
                     {t('EDIT_ALLOWLIST')}
                   </Button>
@@ -332,38 +488,13 @@ class BaseInfo extends React.Component {
                 <div className={styles.content_item_title}>
                   {t('CODE_REPO_PL')}
                 </div>
-                <div className={styles.items}>
-                  {detail.sourceRepos.map(repo => (
-                    <div key={repo} className={styles.item}>
-                      {repo || t('NONE')}
-                    </div>
-                  ))}
-                </div>
+                {this.renderItem('sourceRepos')}
               </div>
               <div className={styles.content_item}>
                 <div className={styles.content_item_title}>
                   {t('DEPLOYMENT_LOCATION_PL')}
                 </div>
-                <div className={styles.items}>
-                  {detail.destinations.map((destination, index) => (
-                    <div
-                      key={index}
-                      className={`${styles.item} ${styles.item_flex}`}
-                    >
-                      <div>
-                        <Icon name="cluster" size={20} />
-                        <b>
-                          {inCluster2Default(destination.name) || t('NONE')}
-                        </b>
-                        <span>({destination.server || t('NONE')})</span>
-                      </div>
-                      <div>
-                        <Icon name="enterprise" size={20} />
-                        <b>{destination.namespace || t('NONE')}</b>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {this.renderItem('destinations')}
               </div>
             </div>
           </>
@@ -384,7 +515,7 @@ class BaseInfo extends React.Component {
           module={this.module}
         />
         {this.renderBaseInfo()}
-        {this.renderCD()}
+        {this.isNeedHide ? null : this.renderCD()}
         <EditModal
           detail={data}
           workspace={this.workspace}

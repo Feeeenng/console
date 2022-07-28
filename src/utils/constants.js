@@ -89,7 +89,7 @@ export const CD_WEATHER_STATUS = [
 
 export const CD_SYNC_STATUS = [
   { text: 'SYNCED', value: 'Synced' },
-  { text: 'OUT_OF_SYNC', value: 'OutOfSync' },
+  { text: 'OUTOFSYNC', value: 'OutOfSync' },
   { text: 'UNKNOWN', value: 'Unknown' },
 ]
 
@@ -125,7 +125,25 @@ export const VOLUME_SNAPSHOT_STATUS = [
 
 export const VOLUME_SNAPSHOT_CLASS_STATUS = [
   { text: 'READY', value: 'true' },
-  { text: 'NOT_READY', value: 'false' },
+  { text: 'UNREADY', value: 'false' },
+]
+
+export const PARMMETER_TYPES = [
+  {
+    label: 'AUTO_PARAMETER',
+    value: 'auto',
+    description: 'AUTO_PARAMETER_DESC',
+  },
+  {
+    label: 'HELM_PARAMETER',
+    value: 'helm',
+    description: 'HELM_PARAMETER_DESC',
+  },
+  {
+    label: 'KUSTOMIZE_PARAMETER',
+    value: 'kustomize',
+    description: 'KUSTOMIZE_PARAMETER_DESC',
+  },
 ]
 
 export const INGRESS_ANNOTATIONS = [
@@ -268,6 +286,7 @@ export const ICON_TYPES = {
   s2ibuilders: 'vnas',
   apps: 'appcenter',
   'volume-snapshots': 'snapshot',
+  'volume-snapshot-content': 'snapshot',
   customresourcedefinitions: 'select',
   network: 'eip-group',
   networkpolicies: 'firewall',
@@ -757,6 +776,7 @@ export const PROVISIONERS = [
     params: [
       {
         key: 'RESTURL',
+        _key: 'resturl',
         type: 'input',
         placeholder:
           'https://<Heketi service cluster IP address>:<Heketi service port>',
@@ -764,11 +784,13 @@ export const PROVISIONERS = [
       },
       {
         key: 'CLUSTER_ID',
+        _key: 'clusterid',
         type: 'input',
         desc: 'GLUSTERFS_ID_DESC',
       },
       {
         key: 'REST_AUTH_ENABLED',
+        _key: 'restauthenabled',
         type: 'select',
         defaultValue: 'true',
         options: [
@@ -779,34 +801,40 @@ export const PROVISIONERS = [
       },
       {
         key: 'REST_USER',
+        _key: 'restuser',
         type: 'input',
         placeholder: 'admin',
         desc: 'GLUSTERFS_RESTUSER_DESC',
       },
       {
         key: 'SECRET_NAMESPACE',
+        _key: 'secretNamespace',
         type: 'input',
         desc: 'GLUSTERFS_SECRET_NAMESPACE_DESC',
       },
       {
         key: 'SECRET_NAME',
+        _key: 'secretName',
         type: 'input',
         desc: 'GLUSTERFS_SECRET_NAME_DESC',
       },
       {
         key: 'GID_MIN',
+        _key: 'gidMin',
         type: 'input',
         placeholder: '2000-2147483647',
         desc: 'GLUSTERFS_GID_MIN_DESC',
       },
       {
         key: 'GID_MAX',
+        _key: 'gidMax',
         type: 'input',
         placeholder: '2000-2147483647',
         desc: 'GLUSTERFS_GID_MAX_DESC',
       },
       {
         key: 'VOLUME_TYPE',
+        _key: 'volumetype',
         type: 'input',
         desc: 'GLUSTERFS_VOLUME_TYPE_DESC',
       },
@@ -1168,3 +1196,5 @@ export const OMIT_TOTAL_REPLICAS = kind => [
   `${kind}.Deployment.totalReplicas`,
   `${kind}.workload.totalReplicas`,
 ]
+
+export const PAGESIZE_OPTION = [10, 20, 50, 100]

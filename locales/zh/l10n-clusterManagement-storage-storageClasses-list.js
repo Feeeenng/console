@@ -24,7 +24,7 @@ module.exports = {
   DEFAULT_STORAGE_CLASS: '默认存储类',
   ALLOW_VOLUME_SNAPSHOT: '允许卷快照',
   ALLOW_VOLUME_CLONE: '允许卷克隆',
-  ALLOW_VOLUME_EXPANSION: '允许卷扩容',
+  ALLOW_VOLUME_EXPANSION: '允许卷扩展',
   // List > Create
   // List > Create > Basic Information
   // List > Create > Storage System
@@ -33,7 +33,7 @@ module.exports = {
   QINGCLOUD_CSI_DESC: '使用 QingCloud CSI 作为底层存储插件。<a href="https://github.com/yunify/qingcloud-csi/blob/master/README.md">了解更多</a>',
   CUSTOM: '自定义',
   // List > Create > > QingCloud CSI > Storage Class Settings
-  VOLUME_EXPANSION: '卷扩容',
+  VOLUME_EXPANSION: '卷扩展',
   RECLAIM_POLICY: '回收机制',
   ACCESS_MODE: '访问模式',
   ACCESS_MODES_DESC: '选择存储类支持的一种或多种访问模式。',
@@ -55,7 +55,7 @@ module.exports = {
   // List > Create > > GlusterFS > Storage Class Settings
   GLUSTERFS_RESTURL_DESC: '供应卷的 Heketi REST URL。',
   GLUSTERFS_ID_DESC: 'Gluster 集群 ID。',
-  GLUSTERFS_RESTAUTHENABLED_DESC: ' Gluster 开启对 REST 服务器的认证。',
+  GLUSTERFS_RESTAUTHENABLED_DESC: 'Gluster 启用对 REST 服务器的认证。',
   GLUSTERFS_RESTUSER_DESC: 'Gluster REST 服务或 Heketi 服务的用户名。',
   GLUSTERFS_SECRET_NAMESPACE_DESC: 'Heketi 用户密钥的所属项目。',
   GLUSTERFS_SECRET_NAME_DESC: 'Heketi 用户密钥的名称。',
@@ -64,7 +64,7 @@ module.exports = {
   GLUSTERFS_VOLUME_TYPE_DESC: '卷的类型。该值可为 none，replicate:<副本数>，或 disperse:<数据>:<冗余数>。如果未设置该值，则默认卷类型为 replicate:3。',
   RESTURL: 'REST URL',
   CLUSTER_ID: '集群 ID',
-  REST_AUTH_ENABLED: '开启 REST 认证',
+  REST_AUTH_ENABLED: '启用 REST 认证',
   REST_USER: 'REST 用户',
   VOLUME_TYPE: '卷类型',
   SECRET_NAME: '密钥名称',

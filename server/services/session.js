@@ -190,6 +190,11 @@ const getUserDetail = async (token, clusterRole) => {
         resp,
         'metadata.annotations["iam.kubesphere.io/globalrole"]'
       ),
+      grantedClusters: get(
+        resp,
+        'metadata.annotations["iam.kubesphere.io/granted-clusters"]',
+        []
+      ),
       lastLoginTime: get(resp, 'status.lastLoginTime'),
     }
   } else {
@@ -198,9 +203,20 @@ const getUserDetail = async (token, clusterRole) => {
 
   try {
     const roles = await getUserGlobalRules(username, token)
+
     if (clusterRole === 'member') {
       roles.users = roles.users.filter(role => role !== 'manage')
       roles.workspaces = roles.workspaces.filter(role => role !== 'manage')
+    }
+
+    const isClustersRole = Object.keys(roles).includes('clusters')
+
+    if (
+      !isClustersRole &&
+      user.globalrole === 'platform-regular' &&
+      user.grantedClusters.length > 0
+    ) {
+      roles.clusters = ['view']
     }
     user.globalRules = roles
   } catch (error) {}
@@ -309,14 +325,17 @@ const getClusterRole = async ctx => {
       token,
     })
     const data = config.data['kubesphere.yaml']
-    const str = /clusterRole:[^\\n]*/g.exec(data)
-    if (str) {
-      role = str[0].split(':')[1]
-      role = role.replace(/\s/g, '')
+    const str = /clusterRole:(\s*[\w]+\s*)/g.exec(data)
+
+    if (str && Array.isArray(str)) {
+      const clusterRole = str[0].split(':')[1].replace(/\s/g, '')
+      role =
+        ['host', 'member'].indexOf(clusterRole) === -1 ? 'host' : clusterRole
     }
   } catch (error) {
     console.error(error)
   }
+
   return role
 }
 
@@ -332,16 +351,21 @@ const getSupportGpuList = async ctx => {
       url: `/kapis/config.kubesphere.io/v1alpha2/configs/gpu/kinds`,
       token,
     })
-    const defaultGpu = list
-      .filter(item => item.default)
-      .map(item => item.resourceName)
-    const otherGpus = list
-      .filter(item => !item.default)
-      .map(item => item.resourceName)
-    gpuKinds = [...defaultGpu, ...otherGpus]
+    if (Array.isArray(list)) {
+      const defaultGpu = list
+        .filter(item => item.default)
+        .map(item => item.resourceName)
+
+      const otherGpus = list
+        .filter(item => !item.default)
+        .map(item => item.resourceName)
+
+      gpuKinds = [...defaultGpu, ...otherGpus]
+    }
   } catch (error) {
     console.error(error)
   }
+
   return gpuKinds
 }
 

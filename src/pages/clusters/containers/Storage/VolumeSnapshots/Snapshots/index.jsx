@@ -24,11 +24,12 @@ import { VOLUME_SNAPSHOT_STATUS } from 'utils/constants'
 import { withClusterList, ListPage } from 'components/HOCs/withList'
 import ResourceTable from 'clusters/components/ResourceTable'
 import SnapshotStore from 'stores/volumeSnapshot'
+import SnapshotClassStore from 'stores/volumeSnapshotClasses'
 import VolumeStore from 'stores/volume'
 import { getLocalTime } from 'utils'
 import { Avatar, Status } from 'components/Base'
 
-import { Icon, Tooltip } from '@kube-design/components'
+import { Icon, Notify, Tooltip } from '@kube-design/components'
 
 import styles from './index.scss'
 
@@ -39,6 +40,10 @@ import styles from './index.scss'
   authKey: 'volumes',
 })
 export default class Snapshots extends React.Component {
+  volumeStore = new VolumeStore()
+
+  snapshotClass = new SnapshotClassStore()
+
   showApply = params => {
     const { cluster, namespace } = params
     return globals.app.hasPermission({
@@ -58,7 +63,14 @@ export default class Snapshots extends React.Component {
       module: store.module,
       cluster,
       namespace,
+      success: this.props.getData,
     })
+  }
+
+  checkSnapshotClassExist = async name => {
+    const { cluster, namespace } = this.props.match.params
+    await this.snapshotClass.fetchDetail({ name, cluster, namespace })
+    return !isEmpty(this.snapshotClass.detail)
   }
 
   get itemActions() {
@@ -70,10 +82,31 @@ export default class Snapshots extends React.Component {
         icon: 'copy',
         text: t('CREATE_VOLUME'),
         show: item => {
-          return this.showApply(item) && item.backupStatus === 'success'
+          return (
+            this.showApply(item) &&
+            item.backupStatus === 'success' &&
+            isEmpty(item.error)
+          )
         },
-        onClick: item => {
-          const { cluster, namespace } = item
+        onClick: async item => {
+          const { cluster, namespace, snapshotClassName } = item
+          const exist = await this.checkSnapshotClassExist(snapshotClassName)
+          if (!exist) {
+            Notify.error({
+              title: t('SNAPSHOT_CLASS_NOT_EXIST_TITLE'),
+              content: t('SNAPSHOT_CLASS_NOT_EXIST'),
+            })
+            return
+          }
+          const storageClassName = get(
+            item,
+            '_originData.spec.source.persistentVolumeClaimName'
+          )
+          await this.volumeStore.fetchDetail({
+            cluster,
+            name: storageClassName,
+            namespace,
+          })
           trigger('volume.create', {
             fromSnapshot: true,
             module: 'persistentvolumeclaims',
@@ -88,7 +121,10 @@ export default class Snapshots extends React.Component {
                     storage: get(item, 'restoreSize'),
                   },
                 },
-                storageClassName: get(item, 'snapshotClassName'),
+                storageClassName: get(
+                  this.volumeStore,
+                  'detail.storageClassName'
+                ),
                 dataSource: {
                   name: get(item, 'name'),
                   kind: 'VolumeSnapshot',

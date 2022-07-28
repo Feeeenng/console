@@ -22,7 +22,7 @@ import { Form, Columns, Column, Alert, Checkbox } from '@kube-design/components'
 import { Modal, Text, Switch } from 'components/Base'
 import NumberInput from 'components/Inputs/NumberInput'
 import { observer } from 'mobx-react'
-import { get, isBoolean, range, set } from 'lodash'
+import { get, isBoolean, range, set, trim, endsWith } from 'lodash'
 import Slider from './Slider'
 import TailItemInput from './TailItemInput'
 import styles from './index.scss'
@@ -96,6 +96,11 @@ export default class StorageClassAutoResizerModal extends React.Component {
     })
   }
 
+  NumberEndDot = num => {
+    const getNumber = /^[0-9]+(\.[0-9]{0,})?/g.exec(num) ?? []
+    return endsWith(getNumber[0], '.') ? num.split('.').join('') : num
+  }
+
   handleOk = () => {
     this.formRef.current.validate(() => {
       const { resize, restart } = this.state
@@ -103,7 +108,9 @@ export default class StorageClassAutoResizerModal extends React.Component {
       const labels = Object.entries(object).map(([k, v]) => {
         const newItem = {}
         Object.entries(v).forEach(([type, value]) => {
-          const data = isBoolean(value) ? JSON.stringify(value) : value
+          const data = isBoolean(value)
+            ? JSON.stringify(value)
+            : this.NumberEndDot(value)
           set(newItem, `annotations['${k}.kubesphere.io/${type}']`, data)
         })
         return newItem.annotations
@@ -131,7 +138,9 @@ export default class StorageClassAutoResizerModal extends React.Component {
   handleLimitChange = val => {
     const { resize } = this.state
     const { unit } = sliderSettings
-    const value = /[0-9]+/g.test(val) ? `${val}${unit}` : '10000Gi'
+    const value = /^[0-9]+(\.[0-9]{0,})?/g.test(val)
+      ? `${trim(val)}${unit}`
+      : '10000Gi'
     this.setState({
       resize: {
         ...resize,
@@ -143,12 +152,7 @@ export default class StorageClassAutoResizerModal extends React.Component {
 
   handleThreshold = val => {
     const { resize } = this.state
-    const value = /[0-9]+/g.test(val) ? val : '10%'
-    // invalid input '-'
-    if (!/[0-9]+/g.test(val) && val !== '%') {
-      return
-    }
-
+    const value = val === '%' ? '10%' : val
     this.setState({
       resize: {
         ...resize,
@@ -160,7 +164,7 @@ export default class StorageClassAutoResizerModal extends React.Component {
 
   handleIncrease = val => {
     const { resize } = this.state
-    const value = /[0-9]+/g.test(val) ? val : '10Gi'
+    const value = val === 'Gi' ? '10Gi' : val
     this.setState({
       resize: {
         ...resize,
@@ -172,12 +176,15 @@ export default class StorageClassAutoResizerModal extends React.Component {
 
   handleMaxTime = time => {
     const { restart } = this.state
+    if (!/^[0-9]*$/g.test(time)) {
+      return
+    }
     this.setState({
       restart: {
         ...restart,
-        'max-time': time === '' ? '300' : `${time}`,
+        'max-time': time === '' ? '300' : `${trim(time)}`,
       },
-      fakeMaxTime: time,
+      fakeMaxTime: trim(time),
     })
   }
 

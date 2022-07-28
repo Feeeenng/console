@@ -63,7 +63,6 @@ export default class TerminalStore {
         cluster,
       })}/nodes/${nodename}/exec`
     }
-
     const result = await request.get(
       `kapis/terminal.kubesphere.io/v1alpha2${this.getClusterPath({
         cluster,
@@ -82,7 +81,6 @@ export default class TerminalStore {
         cluster,
       })}/namespaces/${namespace}/pods/${pod}?container=${container}&shell=${shell}`
     }
-
     return `kapis/terminal.kubesphere.io/v1alpha2${this.getClusterPath({
       cluster,
     })}/namespaces/${namespace}/pods/${pod}/exec?container=${container}&shell=${shell}`

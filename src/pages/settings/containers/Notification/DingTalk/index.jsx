@@ -50,7 +50,6 @@ export default class DingTalk extends React.Component {
       receiver: this.receiverFormTemplate,
       secret: this.secretTemplate,
     },
-    formStatus: 'create',
     isLoading: false,
   }
 
@@ -81,33 +80,33 @@ export default class DingTalk extends React.Component {
 
   fetchData = async () => {
     this.setState({ isLoading: true })
-    const results = await this.configStore.fetchList({ type: 'dingtalk' })
-    const config = results.find(
+
+    const [configResult, receivers, secrets] = await Promise.all([
+      this.configStore.fetchList({ type: 'dingtalk' }),
+      this.receiverStore.fetchList({
+        name: RECEIVER_NAME,
+      }),
+      this.secretStore.fetchList({ name: SECRET_NAME }),
+    ])
+
+    const config = configResult.find(
       item => get(item, 'metadata.name') === CONFIG_NAME
     )
 
-    if (!isEmpty(config)) {
-      const [receivers, secrets] = await Promise.all([
-        this.receiverStore.fetchList({
-          name: RECEIVER_NAME,
-        }),
-        this.secretStore.fetchList({ name: SECRET_NAME }),
-      ])
-
-      this.formData = {
-        config,
-        receiver: set(
-          this.receiverFormTemplate,
-          'spec',
-          get(receivers, '[0].spec', {})
-        ),
-        secret: set(this.secretTemplate, 'data', get(secrets, '[0].data', {})),
-      }
-      this.setState({
-        formData: cloneDeep(this.formData),
-        formStatus: 'update',
-      })
+    this.formData = {
+      config: config || this.configFormTemplate,
+      receiver: set(
+        this.receiverFormTemplate,
+        'spec',
+        get(receivers, '[0].spec', {})
+      ),
+      secret: set(this.secretTemplate, 'data', get(secrets, '[0].data', {})),
     }
+
+    this.setState({
+      formData: cloneDeep(this.formData),
+    })
+
     this.setState({ isLoading: false })
   }
 
@@ -216,10 +215,22 @@ export default class DingTalk extends React.Component {
     return true
   }
 
+  getResource = async () => {
+    const [isExitConfig, isExitReceiver, isExitSecret] = await Promise.all([
+      this.configStore.getResource({ name: CONFIG_NAME }),
+      this.receiverStore.getResource({ name: RECEIVER_NAME }),
+      this.secretStore.getResource({ name: SECRET_NAME }),
+    ])
+
+    return {
+      isExitConfig,
+      isExitReceiver,
+      isExitSecret,
+    }
+  }
+
   handleSubmit = async data => {
     const { config, receiver, secret } = cloneDeep(data)
-    const { formStatus } = this.state
-    let message
 
     if (!this.handleVerify(data)) {
       return
@@ -230,15 +241,47 @@ export default class DingTalk extends React.Component {
       secretData[key] = safeBtoa(secretData[key])
     })
 
-    set(config, 'spec.dingtalk.conversation.appkey.key', 'appkey')
-    set(config, 'spec.dingtalk.conversation.appkey.name', SECRET_NAME)
-    set(config, 'spec.dingtalk.conversation.appsecret.key', 'appsecret')
-    set(config, 'spec.dingtalk.conversation.appsecret.name', SECRET_NAME)
+    set(
+      config,
+      'spec.dingtalk.conversation.appkey.valueFrom.secretKeyRef.key',
+      'appkey'
+    )
+    set(
+      config,
+      'spec.dingtalk.conversation.appkey.valueFrom.secretKeyRef.name',
+      SECRET_NAME
+    )
+    set(
+      config,
+      'spec.dingtalk.conversation.appsecret.valueFrom.secretKeyRef.key',
+      'appsecret'
+    )
+    set(
+      config,
+      'spec.dingtalk.conversation.appsecret.valueFrom.secretKeyRef.name',
+      SECRET_NAME
+    )
 
-    set(receiver, 'spec.dingtalk.chatbot.webhook.key', 'webhook')
-    set(receiver, 'spec.dingtalk.chatbot.webhook.name', SECRET_NAME)
-    set(receiver, 'spec.dingtalk.chatbot.secret.key', 'chatbotsecret')
-    set(receiver, 'spec.dingtalk.chatbot.secret.name', SECRET_NAME)
+    set(
+      receiver,
+      'spec.dingtalk.chatbot.webhook.valueFrom.secretKeyRef.key',
+      'webhook'
+    )
+    set(
+      receiver,
+      'spec.dingtalk.chatbot.webhook.valueFrom.secretKeyRef.name',
+      SECRET_NAME
+    )
+    set(
+      receiver,
+      'spec.dingtalk.chatbot.secret.valueFrom.secretKeyRef.key',
+      'chatbotsecret'
+    )
+    set(
+      receiver,
+      'spec.dingtalk.chatbot.secret.valueFrom.secretKeyRef.name',
+      SECRET_NAME
+    )
 
     if (!secretData.appkey) {
       unset(config, 'spec.dingtalk.conversation.appkey')
@@ -246,6 +289,12 @@ export default class DingTalk extends React.Component {
 
     if (!secretData.appsecret) {
       unset(config, 'spec.dingtalk.conversation.appsecret')
+    }
+
+    const conversation = get(config, 'spec.dingtalk.conversation')
+
+    if (isEmpty(conversation)) {
+      unset(config, 'spec.dingtalk.conversation')
     }
 
     if (!secretData.webhook) {
@@ -267,25 +316,41 @@ export default class DingTalk extends React.Component {
       unset(receiver, 'spec.dingtalk.chatbot')
     }
 
-    if (formStatus === 'create') {
-      await this.configStore.create(config)
-      await this.secretStore.create(
-        set(this.secretTemplate, 'data', secretData)
-      )
-      await this.receiverStore.create(receiver)
-      message = t('CREATE_SUCCESSFUL')
+    const {
+      isExitConfig,
+      isExitReceiver,
+      isExitSecret,
+    } = await this.getResource()
+
+    if (isExitConfig) {
+      if (isEmpty(get(receiver, 'spec.dingtalk.conversation.chatids'))) {
+        await this.configStore.delete({ name: CONFIG_NAME })
+      } else {
+        await this.configStore.update({ name: CONFIG_NAME }, config)
+      }
     } else {
-      await this.configStore.update({ name: CONFIG_NAME }, config)
+      unset(config, 'metadata.resourceVersion')
+      await this.configStore.create(config)
+    }
+
+    if (isExitReceiver) {
+      await this.receiverStore.update({ name: RECEIVER_NAME }, receiver)
+    } else {
+      await this.receiverStore.create(receiver)
+    }
+
+    if (isExitSecret) {
       await this.secretStore.update(
         { name: SECRET_NAME },
         set(this.secretTemplate, 'data', secretData)
       )
-      await this.receiverStore.update({ name: RECEIVER_NAME }, receiver)
-      message = t('UPDATE_SUCCESSFUL')
+    } else {
+      await this.secretStore.create(
+        set(this.secretTemplate, 'data', secretData)
+      )
     }
-
-    this.fetchData()
-    Notify.success({ content: message, duration: 1000 })
+    await this.fetchData()
+    Notify.success({ content: '操作成功', duration: 1000 })
   }
 
   onFormClose = () => {

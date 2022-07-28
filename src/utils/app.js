@@ -18,24 +18,29 @@
 
 import { capitalize } from 'lodash'
 
-import cookie from 'utils/cookie'
 import { STATUS_TRANSFER_MAP } from 'configs/openpitrix/version'
 
 export const transferAppStatus = status => {
-  const name = status === 'draft' ? 'developing' : status
-
-  if (STATUS_TRANSFER_MAP[name]) {
+  if (STATUS_TRANSFER_MAP[status]) {
     return t(
-      `APP_STATUS_${STATUS_TRANSFER_MAP[name].toUpperCase().replace(/-/g, '_')}`
+      `APP_STATUS_${STATUS_TRANSFER_MAP[status]
+        .toUpperCase()
+        .replace(/[^A-Z]+/g, '_')}`
     )
   }
 
-  return name
+  return status
 }
 
 export const transferVersionStatus = status => {
-  if (cookie('lang') === 'zh') {
-    return STATUS_TRANSFER_MAP[status] || status
+  if (STATUS_TRANSFER_MAP[status]) {
+    return status === 'draft'
+      ? t('APP_STATUS_NOT_SUBMITTED')
+      : t(
+          `APP_STATUS_${STATUS_TRANSFER_MAP[status]
+            .toUpperCase()
+            .replace(/[^A-Z]+/g, '_')}`
+        )
   }
   return status
 }
@@ -44,15 +49,13 @@ export const transferReviewStatus = status => {
   let transStatus
   switch (status) {
     case 'submitted':
-      transStatus = 'pending-review'
+      transStatus = 'to-be-reviewed'
       break
     case 'passed':
     case 'suspended':
     case 'rejected':
-      transStatus = status
-      break
     case 'active':
-      transStatus = 'published'
+      transStatus = status
       break
     default:
       transStatus = 'in-review'

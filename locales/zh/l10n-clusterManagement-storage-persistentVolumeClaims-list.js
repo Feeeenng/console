@@ -32,7 +32,7 @@ module.exports = {
   VOLUME_STATUS_PENDING: '等待中',
   VOLUME_STATUS_TERMINATING: '删除中',
   VOLUME_STATUS_UPDATING: '更新中',
-  VOLUME_CONDITION_FILESYSTEMRESIZEPENDING: '磁盘扩容中',
+  VOLUME_CONDITION_FILESYSTEMRESIZEPENDING: '磁盘扩展中',
   PERSISTENT_VOLUME_CLAIM_EMPTY_DESC: '请创建一个持久卷声明。',
   MOUNT_STATUS: '挂载状态',
   MOUNTED: '已挂载',
@@ -40,6 +40,7 @@ module.exports = {
   ACCESS_MODE_TCAP: '访问模式',
   // List > Create > Basic Information
   CREATE: '创建',
+  CREATE_PERSISTENT_VOLUME_CLAIM: '创建持久卷声明',
   // List > Create > Storage Settings
   CREATION_METHOD: '创建方式',
   CREATE_VOLUME_BY_STORAGE_CLASS: '通过存储类创建',

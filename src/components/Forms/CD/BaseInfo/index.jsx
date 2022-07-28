@@ -17,8 +17,8 @@
  */
 
 import React from 'react'
-import CDStore from 'stores/codeRepo'
-
+import CodeStore from 'stores/codeRepo'
+import { pick } from 'lodash'
 import {
   Icon,
   Column,
@@ -33,7 +33,7 @@ import { PATTERN_NAME } from 'utils/constants'
 import styles from './index.scss'
 
 export default class BaseInfo extends React.Component {
-  codeStore = new CDStore()
+  codeStore = new CodeStore()
 
   state = {
     options: [],
@@ -43,14 +43,15 @@ export default class BaseInfo extends React.Component {
     this.getRepoList()
   }
 
-  getRepoList = async () => {
-    const { devops } = this.props
-    await this.codeStore.fetchList({ devops, limit: -1 })
+  getRepoList = async params => {
+    const { devops, cluster } = this.props
+    await this.codeStore.fetchList({ devops, cluster, ...params })
     const options = this.codeStore.list.data.map(item => {
       return {
         label: item.name,
-        value: item.repoURL,
-        icon: item.provider,
+        value: `${item.name}(${item.repoURL})`,
+        icon:
+          item.provider === 'bitbucket_server' ? 'bitbucket' : item.provider,
       }
     })
     this.setState({ options })
@@ -59,9 +60,7 @@ export default class BaseInfo extends React.Component {
   repoOptionRenderer = option => type => (
     <span className={styles.option}>
       <Icon name={option.icon} type={type === 'value' ? 'dark' : 'light'} />
-      <span>
-        {option.label} ({option.value})
-      </span>
+      <span>{option.value}</span>
     </span>
   )
 
@@ -109,6 +108,11 @@ export default class BaseInfo extends React.Component {
             options={this.state.options}
             valueRenderer={option => this.repoOptionRenderer(option)('value')}
             optionRenderer={option => this.repoOptionRenderer(option)('option')}
+            pagination={pick(this.codeStore.list, ['page', 'limit', 'total'])}
+            isLoading={this.codeStore.list.isLoading}
+            onFetch={this.getRepoList}
+            searchable
+            clearable
           />
         </Form.Item>
       </Form>

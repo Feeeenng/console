@@ -20,8 +20,8 @@ module.exports = {
   MODIFY_SUCCESSFUL: 'Başarıyla düzenlendi.',
   SERVICE_PROVIDER_WEBSITE_DESC: 'Servis sağlayıcının resmi web sitesi.',
   WRONG_ADDRESS_TIP: 'Yanlış adres biçimi. Lütfen doğru bir adres giriniz.',
-  APP_NAME_DESC: 'Uygulamanın ismi. Maksimum uzunluk 20 karakterdir.',
-  APP_DESCRIPTION_DESC: 'Uygulamanın açıklaması. Maksimum uzunluk 120 karakterdir.',
+  APP_NAME_DESC: 'Ad herhangi bir karakter içerebilir ve maksimum uzunluk 20 karakterdir.',
+  APP_DESCRIPTION_DESC: 'Açıklama herhangi bir karakter içerebilir ve maksimum uzunluk 120 karakterdir.',
   APP_ICON_FORMAT: 'Biçim: PNG veya JPG',
   APP_ICON_SIZE: 'Boyut: 96 x 96 piksel',
   CHOOSE_APP_CATEGORY_DESC: 'Uygulama için kategori seçiniz.',
@@ -32,10 +32,10 @@ module.exports = {
   SCREENSHOTS_COLON: 'Ekran görüntüleri: ',
   DELETE_ALL: 'Hepsini Sil',
   // More > Install
-  // More > Upload New Version
+  // More > Upload Version
   ADD_VERSION_SUCCESSFUL: 'Sürüm başarıyla eklendi.',
   UPLOAD_PACKAGE_OK_NOTE: 'Sürüm zaten mevcut. Lütfen farklı bir sürüm yükleyiniz.',
-  UPLOAD_NEW_VERSION: 'Yeni Sürüm Yükle',
+  UPLOAD_NEW_VERSION: 'Sürümü Yükle',
   UPLOAD_NEW_VERSION_DESC: 'Uygulama şablonunun yeni sürümünü yükle.',
   // More > Delete
   DELETE_APP_TEMPLATE_DESC: 'Bu işlemin risklerini anladığınızı doğrulamak için <b>{resource}</b> uygulama şablonu adını girin.',
@@ -43,9 +43,11 @@ module.exports = {
   APP_TEMPLATE_LOW: 'uygulama şablonu',
   // Details
   // Versions
+  APP_STATUS_SUBMITTED: 'Gönderilen',
+  APP_STATUS_NOT_SUBMITTED: 'Gönderilemedi',
   VERSION_INFO: 'Sürüm Bilgisi',
   INSTALL: 'Kur',
-  SUBMIT_FOR_RELEASE: 'Yayınlanmak Üzere Gönder',
+  SUBMIT_FOR_REVIEW: 'İnceleme için gönder',
   DOWNLOAD_SUCCESSFUL: 'Başarılı olarak inidirildi.',
   VERSION_DELETE_TIP: '<strong>{name}</strong> sürümünü silmek istediğinizden emin misiniz?',
   VERSION_SUBMIT_TIP: '<strong>{name}</strong> sürümünü yayınlanmak üzere göndermek istediğinizden emin misiniz?',
@@ -55,18 +57,17 @@ module.exports = {
   VERSION_RECOVER_TIP: '<strong>{name}</strong> sürümü, kurtarıldıktan sonra App Store\'da görüntülenebilecek. Kurtarmak istediğinizden emin misiniz?',
   UPDATE_TIME_SCAP: 'Güncelleme zamanı',
   VIEW_IN_STORE: 'Mağazada Görüntüle',
-  RELEASE_TO_STORE: 'Mağazada Yayınla',
   // Versions > Upload
   UPLOAD_AGAIN_TIP: 'Bir hata oluştu. Lütfen tekrar deneyin.',
-  // Versions > Submit for Release
+  // Versions > Submit for Review
   ENTER_VERSION_NUMBER_TIP: 'Lütfen bir sürüm numarası girin.',
-  SUBMIT_REVIEW_DESC: 'Uygulamayı yayınlanmak üzere gönder.',
+  SUBMIT_REVIEW_DESC: 'App Store\'da yayınlamadan önce uygulama şablonunu incelemeye gönderin.',
   APP_LEARN_MORE: '<a href="{docUrl}/application-store/app-developer-guide/helm-developer-guide/" target="_blank">Daha Fazla Bilgi</a>',
   INVALID_VERSION_TIP: 'Lütfen doğru bir sürüm numarası girin.',
-  // Versions > Submit for Release > Test Steps
+  // Versions > Submit for Review > Test Steps
   VERSION_SUBMIT_TEST_STEPS: '1. Tüm bağımlı çizelgelerin gönderilmiş olması.<br/>' + '2. Statik analizden geçmiş olması (helm lint).<br/>' + '3. Uygulamanın varsayılan değerler ile başlatılabilir olması (helm install). Tüm pod\'ların çalışır durumda olması ve tüm servislerin en az bir uç noktaya sahip olması.<br/>' + '4. Kullanılan imajların güvenlik zaafiyeti içermemesi.<br/>' + '5. Güncellemenin desteklenmesi.<br/>' + '6. Özel uygulama konfigürasyonunun desteklenmesi<br/>' + '7. Kubernetes alpha yeteneklerinin kullanılmaması<br/>' + '8. Uygulama girizgahını, gereksinimlerini ve özel parametre konfigürasyonlarını da içeren detaylı dökümantasyonun sağlanması.<br/>',
   VERSION_SUBMIT_NOTE: 'Başvuru iletmeden önce lütfen uygulamanızın sıradaki gereksinimleri sağladığından emin olun:',
-  // Versions > Submit for Release > Update Log
+  // Versions > Submit for Review > Update Log
   UPDATE_LOG_DESC: 'Uygulama güncellemeleri için detaylı bilgi giriniz.',
   SUBMIT_SUCCESSFUL: 'Başarıyla iletildi.',
   CANCEL_SUCCESSFUL: 'Başarıyla iptal edildi.',

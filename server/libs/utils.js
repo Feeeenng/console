@@ -75,8 +75,22 @@ const getServerConfig = key => {
 
 const getCache = () => cache
 
-const isValidReferer = path =>
-  !isEmpty(path) && path !== '/' && path.indexOf('/login') === -1
+const URL_PATTEN = /^(https|http|ftp|rtsp|mms){0,1}:?(\/)+(([A-Za-z0-9-~]+)\.)+([A-Za-z0-9-~\\/])+$/
+
+const isValidReferer = path => {
+  if (isEmpty(path)) {
+    return false
+  }
+  const referer = decodeURIComponent(path)
+  const isUrl = URL_PATTEN.test(referer)
+
+  // eslint-disable-next-line no-script-url
+  const isJsScript = referer.indexOf('javascript:') < 0
+
+  return (
+    referer !== '/' && referer.indexOf('/login') === -1 && !isUrl && isJsScript
+  )
+}
 
 /**
  *
@@ -142,6 +156,21 @@ const safeParseJSON = (json, defaultValue) => {
   return result
 }
 
+const safeBase64 = {
+  safeBtoa: str => {
+    if (typeof str !== 'string') {
+      return ''
+    }
+    return Buffer.from(str).toString('base64')
+  },
+  safeAtob: str => {
+    if (typeof str !== 'string') {
+      return ''
+    }
+    return Buffer.from(str, 'base64').toString('utf-8')
+  },
+}
+
 const getManifest = entry => {
   let manifestCache = cache.get(`${MANIFEST_CACHE_KEY_PREFIX}${entry}`)
 
@@ -188,4 +217,5 @@ module.exports = {
   isAppsRoute,
   decryptPassword,
   safeParseJSON,
+  safeBase64,
 }

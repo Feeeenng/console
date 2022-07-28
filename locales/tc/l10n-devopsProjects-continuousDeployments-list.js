@@ -24,6 +24,8 @@ module.exports = {
   DEGRADED: 'Degraded',
   PROGRESSING: '創建進度(Progressing)',
   SYNCED: 'Synced',
+  MISSING: 'Missing',
+  SUSPENDED: '已下架',
   OUTOFSYNC: 'Out of sync',
   DEPLOY_LOCATION: 'Deployment Location',
   // List > Create

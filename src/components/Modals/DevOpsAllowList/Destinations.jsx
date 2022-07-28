@@ -16,16 +16,21 @@
  * along with KubeSphere Console.  If not, see <https://www.gnu.org/licenses/>.
  */
 import React from 'react'
-import { pick, get, set, isEmpty, isEqual } from 'lodash'
+import { pick, get, isEmpty, set } from 'lodash'
 import { ObjectInput } from 'components/Inputs'
 import ProjectStore from 'stores/project'
-import { Select, Icon } from '@kube-design/components'
-import { action, computed, observable } from 'mobx'
+import { Select, Icon, Tooltip } from '@kube-design/components'
+import { action, observable } from 'mobx'
 import { observer } from 'mobx-react'
 import { inCluster2Default } from 'utils'
 
 import styles from './index.scss'
 
+const allItem = {
+  label: t('ALL'),
+  value: '*',
+  icon: 'allowlist',
+}
 @observer
 export default class Destinations extends React.Component {
   projectStore = new ProjectStore()
@@ -35,9 +40,8 @@ export default class Destinations extends React.Component {
   }
 
   @observable
-  cluster = this.props.formtemplate.name || ''
+  cluster = ''
 
-  @computed
   get clusters() {
     return this.props.clusters || []
   }
@@ -46,19 +50,8 @@ export default class Destinations extends React.Component {
     return get(this.props.formtemplate, 'spec.argo.destinations', [])
   }
 
-  componentDidMount() {
-    this.init()
-  }
-
-  componentDidUpdate(prevProps) {
-    if (!isEqual(prevProps.formtemplate, this.props.formtemplate)) {
-      this.init()
-    }
-  }
-
-  @computed
   get namespaces() {
-    return this.projectStore.list.data
+    const data = this.projectStore.list.data
       .filter(item => item.status !== 'Terminating')
       .map(item => ({
         label: item.name,
@@ -66,59 +59,87 @@ export default class Destinations extends React.Component {
         disabled: item.isFedManaged,
         isFedManaged: item.isFedManaged,
       }))
+
+    if (this.cluster) {
+      return [allItem, ...data]
+    }
+
+    return data
+  }
+
+  componentDidMount() {
+    this.init()
   }
 
   async init() {
-    const { name, namespace, server } =
-      this.destinations[this.props.index] || {}
+    const { name, namespace } = this.destinations[this.props.index] || {}
 
-    if (name && server && namespace && this.clusters.length > 0) {
-      const clusterInfo = this.clusters.find(item => item.value === name)
+    if (name) {
+      const clusterInfo = this.clusters.find(item => item.value === name) || {}
+
+      this.cluster = clusterInfo.value
 
       set(this.state.formData, `name`, get(this.clusters, clusterInfo.value))
       set(this.state.formData, `server`, get(this.clusters, clusterInfo.server))
 
-      this.cluster = clusterInfo.value
-
       await this.fetchNamespaces()
 
-      const namespaceData =
-        this.namespaces.find(item => item.value === namespace) ||
-        set(this.state.formData, `namespace`, namespaceData.value || '')
+      const namespaceData = this.namespaces.find(
+        item => item.value === namespace
+      )
+
+      set(this.state.formData, `namespace`, namespaceData?.value ?? '')
     }
   }
 
   fetchNamespaces = async (params = {}) => {
     const _cluster = inCluster2Default(this.cluster)
-    await this.projectStore.fetchList({
-      cluster: _cluster,
-      ...params,
-      type: 'user',
-    })
+    if (_cluster === '*') {
+      this.projectStore.list.update({
+        data: [],
+        isLoading: false,
+      })
+    } else if (_cluster && _cluster !== '*') {
+      await this.projectStore.fetchList({
+        cluster: _cluster,
+        ...params,
+        type: 'user',
+      })
+    }
   }
 
-  projectOptionRenderer = option => (
-    <span className={styles.option}>
-      {option.isFedManaged ? (
-        <img className={styles.indicator} src="/assets/cluster.svg" />
-      ) : (
-        <Icon name="project" />
-      )}
-      {option.label}
-      {option.isFedManaged && (
-        <Tooltip content={t('MULTI_CLUSTER_PROJECT_NOT_FOR_CD')}>
-          <Icon className={styles.tip} name="question" />
-        </Tooltip>
-      )}
-    </span>
-  )
+  projectOptionRenderer = option => {
+    return (
+      <span className={styles.option}>
+        {option.isFedManaged ? (
+          <img className={styles.indicator} src="/assets/cluster.svg" />
+        ) : (
+          <Icon name="project" />
+        )}
+        {option.label}
+        {option.isFedManaged && (
+          <Tooltip content={t('MULTI_CLUSTER_PROJECT_NOT_FOR_CD')}>
+            <Icon className={styles.tip} name="question" />
+          </Tooltip>
+        )}
+      </span>
+    )
+  }
 
   @action
   handleClusterChange = async value => {
-    await this.fetchNamespaces()
-    const server = this.clusters.find(item => item.value === value).server
     this.cluster = value
-    this.props.onChange({ name: value, server })
+
+    await this.fetchNamespaces()
+
+    const server = this.clusters.find(item => item.value === value).server
+    const namespaces = this.namespaces[0].value
+
+    this.props.onChange({
+      name: value,
+      server,
+      namespace: namespaces,
+    })
   }
 
   handleChange = res => {
@@ -143,7 +164,7 @@ export default class Destinations extends React.Component {
         />
         <Select
           name="namespace"
-          placeholder={t('WORKSPACE')}
+          placeholder={t('PROJECT')}
           options={this.namespaces}
           pagination={pick(this.projectStore.list, ['page', 'limit', 'total'])}
           isLoading={this.projectStore.list.isLoading}
@@ -151,7 +172,6 @@ export default class Destinations extends React.Component {
           valueRenderer={this.projectOptionRenderer}
           optionRenderer={this.projectOptionRenderer}
           searchable
-          clearable
         />
       </ObjectInput>
     )

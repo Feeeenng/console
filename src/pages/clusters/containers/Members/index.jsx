@@ -113,7 +113,7 @@ export default class Members extends React.Component {
               ...this.props.match.params,
               roles: toJS(this.roleStore.list.data),
               roleModule: this.roleStore.module,
-              title: t('Invite members to the cluster'),
+              title: t('INVITE_MEMBER'),
               desc: t('INVITE_CLUSTER_MEMBER_DESC'),
               searchPlaceholder: t('INVITE_MEMBER_SEARCH_PLACEHOLDER'),
               success: routing.query,
@@ -142,7 +142,7 @@ export default class Members extends React.Component {
 
   getColumns = () => [
     {
-      title: t('Member Name'),
+      title: t('USERNAME'),
       dataIndex: 'username',
       sorter: true,
       render: (name, record) => (
@@ -164,7 +164,7 @@ export default class Members extends React.Component {
       ),
     },
     {
-      title: t('Role'),
+      title: t('ROLE'),
       dataIndex: 'clusterrole',
       isHideable: true,
       width: '19%',

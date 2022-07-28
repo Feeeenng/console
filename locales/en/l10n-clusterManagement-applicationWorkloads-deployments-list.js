@@ -24,19 +24,21 @@ module.exports = {
   DEPLOYMENTS: 'Deployments',
   UPDATE_TIME_TCAP: 'Update Time',
   ALL_PROJECTS: 'All projects',
+  SHOW_NUM: 'Show: {num}',
   // List > Create > Basic Information
   SELECT_PROJECT_DESC: 'Select a project in which the resource is to be created.',
   PROJECT_NOT_SELECT_DESC: 'Please select a project.',
   BASIC_INFORMATION: 'Basic Information',
   NAME: 'Name',
   FEDPROJECT_RESOURCE_TIP: 'To create workload resources in a multi-cluster project, go to the Workloads page in the multi-cluster project.',
-  FINISHED: 'Finished',
-  NOT_SET: 'Not set',
+  FINISHED: 'Done',
+  NOT_SET: 'To do',
   CURRENT: 'Current',
   PROJECT: 'Project',
   // List > Create > Pod Settings
   PREVIOUS: 'Previous',
   NOTE: 'Note',
+  CREATE_CONFIGMAP_SECRET_DESC: 'If no configmap or secret meets the requirements, you can',
   // List > Create > Pod Settings > Add Container > Container Settings
   IMAGE: 'Image',
   IMAGE_VALUE: 'Image: {value}',

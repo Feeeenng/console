@@ -16,9 +16,9 @@
  * along with KubeSphere Console.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { action, observable } from 'mobx'
-import { isArray, get, isEmpty, set } from 'lodash'
-import { parseUrl, getQueryString, generateId } from 'utils'
+import { action, observable, toJS } from 'mobx'
+import { isArray, isEmpty, get } from 'lodash'
+import { parseUrl, getQueryString, compareVersion, generateId } from 'utils'
 
 import qs from 'qs'
 import BaseStore from '../devops'
@@ -79,6 +79,10 @@ export default class SCMStore extends BaseStore {
     }
   }
 
+  get isMultiCluster() {
+    return globals.ksConfig.multicluster
+  }
+
   @observable
   isAccessTokenWrong = false
 
@@ -92,10 +96,23 @@ export default class SCMStore extends BaseStore {
   orgList = {
     isLoading: false,
     data: [],
+    isEnd: false,
+    pagination: {
+      pageNumber: 1,
+      pageSize: 100,
+    },
   }
 
   @observable
-  getRepoListLoading = false
+  repoList = {
+    isLoading: false,
+    data: [],
+    isEnd: false,
+    pagination: {
+      pageNumber: 1,
+      pageSize: 100,
+    },
+  }
 
   @observable
   activeRepoIndex = ''
@@ -106,22 +123,53 @@ export default class SCMStore extends BaseStore {
   @observable
   creatBitBucketServersError = {}
 
+  @observable
+  orgParams = {}
+
+  getClusterVersion = cluster =>
+    this.isMultiCluster
+      ? get(globals, `clusterConfig.${cluster}.ksVersion`)
+      : get(globals, 'ksConfig.ksVersion')
+
+  isNeedUpdate = cluster => {
+    return compareVersion(this.getClusterVersion(cluster), '3.3.0') < 0
+  }
+
   @action
-  async getOrganizationList(params, scmType, cluster) {
+  async getOrganizationList(
+    { pageNumber = 1, pageSize = 100, more = false, credentialId, ...params },
+    scmType,
+    cluster
+  ) {
     this.orgList.isLoading = true
     this.scmType = scmType
     this.orgParams = params
 
-    const result = await request.get(
-      `${this.getDevopsUrlV3({ cluster })}scms/${scmType ||
-        'github'}/organizations?${getQueryString(params, false)}`
-    )
+    const url = `${this.getDevopsUrlV3({ cluster })}scms/${scmType ||
+      'github'}/organizations?${getQueryString(
+      { pageNumber, pageSize, ...params },
+      false
+    )}`
+
+    const oldUrl = `${this.getDevopsUrlV2({ cluster })}scms/${scmType ||
+      'github'}/organizations/?${getQueryString(
+      { ...params, credentialId },
+      false
+    )}`
+
+    const result = await request
+      .get(this.isNeedUpdate(cluster) ? oldUrl : url)
+      .catch(() => {
+        return []
+      })
 
     if (isArray(result)) {
-      this.orgList.data = result
+      this.orgList.data = more ? [...this.orgList.data, ...result] : result
     }
 
     this.orgList.isLoading = false
+    this.orgList.isEnd = result.length < pageSize
+    this.orgList.pagination = { pageSize, pageNumber }
     return this.orgList
   }
 
@@ -136,7 +184,13 @@ export default class SCMStore extends BaseStore {
   }
 
   @action
-  async getRepoList({ activeRepoIndex, cluster }) {
+  async getRepoList({
+    cluster,
+    activeRepoIndex,
+    pageNumber = 1,
+    pageSize = 100,
+    more = false,
+  }) {
     const _activeRepoIndex =
       activeRepoIndex !== undefined
         ? activeRepoIndex
@@ -145,94 +199,103 @@ export default class SCMStore extends BaseStore {
         : this.activeRepoIndex
 
     const scmType = this.scmType || 'github'
-    const pageNumber =
-      get(this.orgList.data[_activeRepoIndex], 'repositories.nextPage') || 1
 
-    const organizationName =
-      scmType === 'bitbucket-server'
+    const organizationName = this.isNeedUpdate(cluster)
+      ? scmType === 'bitbucket-server'
         ? this.orgList.data[_activeRepoIndex].key
         : this.orgList.data[_activeRepoIndex].name
+      : this.orgList.data[_activeRepoIndex].name
 
-    this.getRepoListLoading = true
+    this.repoList.isLoading = true
 
-    const result = await request.get(
-      `${this.getDevopsUrlV3({
-        cluster,
-      })}scms/${scmType}/organizations/${organizationName}/repositories/?${getQueryString(
-        {
-          ...this.orgParams,
-          pageNumber,
-          pageSize: 100,
-        },
-        false
-      )}`,
-      {},
-      null,
-      (res, err) => {
-        this.getRepoListLoading = false
-        set(this.orgList, `data[${_activeRepoIndex}].repositories.item`, [])
-        if (window.onunhandledrejection) {
-          window.onunhandledrejection(err)
-        }
-        return Promise.reject(err)
+    const url = `${
+      this.isNeedUpdate(cluster)
+        ? this.getDevopsUrlV2({
+            cluster,
+          })
+        : this.getDevopsUrlV3({
+            cluster,
+          })
+    }scms/${scmType}/organizations/${organizationName}/repositories?${getQueryString(
+      {
+        ...this.orgParams,
+        pageNumber,
+        pageSize,
+      },
+      false
+    )}`
+
+    const result = await request.get(url, {}, null, (res, err) => {
+      this.repoList.isLoading = false
+      this.repoList.data = []
+      if (window.onunhandledrejection) {
+        window.onunhandledrejection(err)
       }
-    )
+      return Promise.reject(err)
+    })
 
     if (result.repositories) {
-      const currentRepository = get(
-        this.orgList,
-        `data[${_activeRepoIndex}].repositories`,
-        {}
-      )
       // insert new repolist in current orglist
-      if (isArray(currentRepository.items)) {
-        currentRepository.items = currentRepository.items.concat(
-          result.repositories.items
-        )
-        currentRepository.nextPage = result.repositories.nextPage
+      if (isArray(toJS(this.repoList.data))) {
+        this.repoList.data = more
+          ? [...this.repoList.data, ...result.repositories.items]
+          : [...result.repositories.items]
+        this.repoList.isEnd = result.repositories.items.length < pageSize
+        this.repoList.pagination = { pageSize, pageNumber }
       } else {
-        set(
-          this.orgList,
-          `data[${_activeRepoIndex}].repositories`,
-          result.repositories
-        )
+        this.repoList.data = result.repositories
       }
     }
-    this.getRepoListLoading = false
-    return this.orgList
+    this.repoList.isLoading = false
+
+    return this.repoList
   }
 
-  async putAccessName({ secretName, secretNamespace, cluster }) {
+  async putAccessName({ secretName, secretNamespace, cluster, token }) {
     this.isAccessTokenWrong = false
+
     const result = await this.verifySecretForRepo(
       { secret: secretName, secretNamespace },
       {
         scmType: 'github',
         cluster,
+        accessToken: token,
       }
     )
 
     if (result && result.credentialId) {
       await this.getOrganizationList(
-        { secret: secretName, secretNamespace, includeUser: true },
+        {
+          secret: secretName,
+          secretNamespace,
+          includeUser: true,
+          credentialId: result.credentialId,
+        },
         'github',
         cluster
       )
     }
   }
 
-  async verifySecretForRepo(params, { scmType, cluster, devops, ...rest }) {
+  async verifySecretForRepo(
+    params,
+    { scmType, cluster, devops, accessToken, ...rest }
+  ) {
     let _type = scmType
 
     if (/https:\/\/bitbucket.org\/?/gm.test(`${rest.apiUrl}`)) {
       _type = 'bitbucket_cloud'
     }
 
+    const old = `${this.getDevopsUrlV2({ cluster })}scms/${_type}/verify/`
+
+    const url = `${this.getDevopsUrlV3({
+      cluster,
+    })}scms/${_type}/verify?${getQueryString(params, false)}`
+
     return await request.post(
-      `${this.getDevopsUrlV3({
-        cluster,
-      })}scms/${_type}/verify?${getQueryString(params, false)}`,
-      rest,
+      this.isNeedUpdate(cluster) ? old : url,
+      this.isNeedUpdate(cluster) ? { ...rest, accessToken } : rest,
       null,
       this.verifyAccessErrorHandle[scmType]
     )
@@ -260,11 +323,20 @@ export default class SCMStore extends BaseStore {
   @action
   creatBitBucketServers = async ({
     apiUrl,
-    credentialId,
     cluster,
-    credentialDetail,
+    secretName,
+    secretNamespace,
+    username,
+    password,
   }) => {
     this.creatBitBucketServersError = {}
+
+    this.tokenFormData = {
+      username,
+      password,
+      apiUrl,
+      credentialId: secretName,
+    }
 
     if (isEmpty(parseUrl(apiUrl))) {
       this.creatBitBucketServersError = {
@@ -277,43 +349,79 @@ export default class SCMStore extends BaseStore {
       return
     }
 
-    let result = { id: generateId(4) }
+    if (this.isNeedUpdate(cluster)) {
+      let result = { id: generateId(4) }
 
-    if (!/https:\/\/bitbucket.org\/?/gm.test(`${apiUrl}`)) {
-      result = await request.post(
-        `${this.getDevopsUrlV2({ cluster })}scms/bitbucket-server/servers`,
+      if (!/https:\/\/bitbucket.org\/?/gm.test(`${apiUrl}`)) {
+        result = await request.post(
+          `${this.getDevopsUrlV2({ cluster })}scms/bitbucket-server/servers`,
+          {
+            apiUrl,
+            name: secretName,
+          },
+          null,
+          this.verifyAccessErrorHandle['bitbucket-server']
+        )
+      }
+
+      if (!result || !result.id) {
+        return
+      }
+
+      const verifyResult = await this.verifySecretForRepo(
+        {},
         {
           apiUrl,
-          name: credentialId,
-        },
-        null,
-        this.verifyAccessErrorHandle['bitbucket-server']
+          scmType: 'bitbucket-server',
+          cluster,
+          userName: username,
+          password,
+        }
       )
-    }
 
-    if (!result || !result.id) {
-      return
-    }
-
-    const secretName = get(credentialDetail, 'name')
-    const secretNamespace = get(credentialDetail, 'namespace')
-
-    const verifyResult = await this.verifySecretForRepo(
-      { secret: secretName, secretNamespace },
-      {
-        scmType: 'bitbucket-server',
-        cluster,
-        apiUrl,
+      if (verifyResult && verifyResult.credentialId) {
+        this.orgList.isLoading = false
+        this.getOrganizationList(
+          {
+            credentialId: verifyResult.credentialId,
+            apiUrl,
+          },
+          verifyResult.credentialId,
+          cluster
+        )
       }
-    )
-
-    if (verifyResult && verifyResult.credentialId) {
-      this.orgList.isLoading = false
-      await this.getOrganizationList(
-        { secret: secretName, secretNamespace },
-        'bitbucket-server',
-        cluster
+    } else {
+      const verifyResult = await this.verifySecretForRepo(
+        {
+          secret: secretName,
+          secretNamespace,
+          server: apiUrl,
+        },
+        {
+          scmType: 'bitbucket-server',
+          cluster,
+          apiUrl,
+        }
       )
+
+      if (verifyResult && verifyResult.code === 0) {
+        this.orgList.isLoading = false
+        await this.getOrganizationList(
+          {
+            secret: secretName,
+            secretNamespace,
+            server: apiUrl,
+          },
+          'bitbucket-server',
+          cluster
+        )
+      } else if (verifyResult && verifyResult.code !== 0) {
+        this.creatBitBucketServersError = {
+          apiUrl: {
+            message: verifyResult.message,
+          },
+        }
+      }
     }
   }
 
@@ -333,6 +441,13 @@ export default class SCMStore extends BaseStore {
       bitbucketServerList = result.map(item => {
         return { label: item.apiUrl, value: item.apiUrl }
       })
+    } else {
+      bitbucketServerList = [
+        {
+          label: 'https://bitbucket.org',
+          value: 'https://bitbucket.org',
+        },
+      ]
     }
 
     return bitbucketServerList

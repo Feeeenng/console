@@ -85,8 +85,8 @@ export default class VolumeSnapshot extends React.Component {
         width: '20.5%',
         render: (backupStatus, _) => (
           <Status
-            type={backupStatus}
-            name={_.readyToUse ? t('READY') : t('NOT_READY')}
+            type={_.readyToUse ? 'ready' : 'failed'}
+            name={_.readyToUse ? t('READY') : t('UNREADY')}
           />
         ),
       },
@@ -123,6 +123,7 @@ export default class VolumeSnapshot extends React.Component {
         empty={t('NO_AVAILABLE_RESOURCE_VALUE', {
           resource: t('VOLUME_SNAPSHOT'),
         })}
+        className={styles.noPadding}
       >
         <BaseTable
           className={styles.table}

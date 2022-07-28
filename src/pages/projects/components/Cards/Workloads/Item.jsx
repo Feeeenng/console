@@ -50,10 +50,14 @@ export default class WorkloadItem extends React.Component {
 
     const { updateTime, createTime } = detail
     if (updateTime) {
-      return t('UPDATED_AGO', { value: getLocalTime(updateTime).fromNow() })
+      return t('UPDATED_TIME', {
+        value: getLocalTime(updateTime).format('YYYY-MM-DD HH:mm:ss'),
+      })
     }
 
-    return t('CREATED_AGO', { diff: getLocalTime(createTime).fromNow() })
+    return t('CREATED_TIME', {
+      diff: getLocalTime(createTime).format('YYYY-MM-DD HH:mm:ss'),
+    })
   }
 
   render() {
@@ -68,6 +72,8 @@ export default class WorkloadItem extends React.Component {
       'annotations["deployment.kubernetes.io/revision"]'
     )
 
+    const kind = get(detail, 'module')
+
     return (
       <div className={styles.item}>
         <Text
@@ -79,6 +85,7 @@ export default class WorkloadItem extends React.Component {
           }
           description={this.getDescription(detail)}
         />
+        <Text title={kind ? t(`${kind}`) : '-'} description={t('TYPE')} />
         <Text
           title={<WorkloadStatus data={detail} module={detail.module} />}
           description={t('STATUS')}

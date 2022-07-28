@@ -29,13 +29,14 @@ module.exports = {
   BASIC_INFORMATION: '基本資訊',
   NAME: '名稱',
   FEDPROJECT_RESOURCE_TIP: '無法在集群管理内創建多集群項目的資源, 請到多集群項目頁面内進行操作。',
-  FINISHED: '已設置',
-  NOT_SET: '未設置',
+  FINISHED: 'Done',
+  NOT_SET: 'To do',
   CURRENT: '目前',
   PROJECT: '項目',
   // List > Create > Pod Settings
   PREVIOUS: '上一步',
   NOTE: '請注意',
+  CREATE_CONFIGMAP_SECRET_DESC: '如果没有配置字典或保密字典滿足要求，您可以',
   // List > Create > Pod Settings > Add Container > Container Settings
   IMAGE: '鏡像',
   IMAGE_VALUE: '鏡像：{value}',
@@ -47,7 +48,7 @@ module.exports = {
   SELECT_TYPE: '選擇{type}',
   SPECIFY_SUBPATH: '點擊指定子路徑',
   SPECIFY_SUBPATH_TIP: '指定需要掛載到容器的儲存卷子路徑。',
-  MOUNT_PATH: 'Mount path',
+  MOUNT_PATH: '掛載路徑',
   // List > Create > Advanced Settings
   NETWORK_SEGMENT_SCAP: '網段',
   AVAILABLE_ADDRESSES: '可用地址數量',

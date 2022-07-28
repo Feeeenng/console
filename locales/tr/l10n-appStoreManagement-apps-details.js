@@ -17,12 +17,12 @@
  */
 module.exports = {
   // Title
-  // Suspend App
-  SUSPEND_APP: 'Uygulamayı Askıya Al',
+  // Suspend
+  SUSPEND: 'Askıya al',
   APP_NOTE: 'Not',
   SUSPEND_SUCCESSFUL: 'Başarıyla askıya alındı.',
-  // Activate App
-  ACTIVATE_APP: 'Uygulamayı Etkinleştir',
+  // Release
+  RELEASE: 'Yayınlamak',
   ACTIVATE_SUCCESSFUL: 'Başarıyla etkinleştirildi.',
   // Details
   APP_ID: 'Uygulama Kimliği',

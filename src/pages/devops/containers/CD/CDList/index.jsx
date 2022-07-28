@@ -52,7 +52,7 @@ export default class CDList extends React.Component {
   get enabledActions() {
     return globals.app.getActions({
       module: 'applications',
-      cluster: this.props.match.params.cluster,
+      cluster: this.cluster,
       devops: this.devops,
     })
   }
@@ -80,6 +80,19 @@ export default class CDList extends React.Component {
     return this.props.rootStore.routing
   }
 
+  get hideSummary() {
+    const { healthStatus = {}, syncStatus = {} } = toJS(
+      this.props.store.summary
+    )
+
+    const isEmpty = []
+      .concat(Object.values(healthStatus))
+      .concat(Object.values(syncStatus))
+      .every(item => !item)
+
+    return isEmpty
+  }
+
   get itemActions() {
     const { trigger, routing } = this.props
 
@@ -91,7 +104,7 @@ export default class CDList extends React.Component {
         action: 'edit',
         onClick: item => {
           trigger('resource.baseinfo.edit', {
-            detail: item,
+            detail: { ...item, cluster: this.cluster },
             success: routing.query,
           })
         },
@@ -103,7 +116,7 @@ export default class CDList extends React.Component {
         action: 'edit',
         onClick: item => {
           trigger('resource.yaml.edit', {
-            detail: item,
+            detail: { ...item, cluster: this.cluster },
             success: routing.query,
           })
         },
@@ -126,6 +139,7 @@ export default class CDList extends React.Component {
           trigger('cd.delete', {
             type: 'CONTINUOUS_DEPLOYMENT',
             detail: record,
+            cluster: this.cluster,
             success: routing.query,
           })
         },
@@ -139,7 +153,10 @@ export default class CDList extends React.Component {
       ...this.props.match.params,
       ...params,
     })
-    await this.props.store.fetchStatusSummary({ devops: this.devops })
+    await this.props.store.fetchStatusSummary({
+      devops: this.devops,
+      cluster: this.cluster,
+    })
   }
 
   componentDidMount() {
@@ -258,9 +275,10 @@ export default class CDList extends React.Component {
         isHideable: true,
         width: '20%',
         render: (updateTime, record) => {
-          return getLocalTime(get(record, 'status.reconciledAt')).format(
-            'YYYY-MM-DD HH:mm:ss'
-          )
+          const reconciledAt = get(record, 'status.reconciledAt')
+          return reconciledAt
+            ? getLocalTime(reconciledAt).format('YYYY-MM-DD HH:mm:ss')
+            : '-'
         },
       },
     ]
@@ -392,7 +410,8 @@ export default class CDList extends React.Component {
         label: 'SYNC_STATUS',
       },
       {
-        title: 'OUT_OF_SYNC',
+        title: 'OUTOFSYNC',
+        filterValue: 'OutOfSync',
         color: '#F5A623',
         used: syncStatus.OutOfSync || 0,
         total,
@@ -431,14 +450,16 @@ export default class CDList extends React.Component {
       <ListPage {...this.props} getData={this.getData}>
         <Banner {...bannerProps} />
         <div>
-          <div className={styles.status__container}>
-            <div className={styles.warper__container}>
-              {this.renderStatusCard()}
+          {!this.hideSummary && (
+            <div className={styles.status__container}>
+              <div className={styles.warper__container}>
+                {this.renderStatusCard()}
+              </div>
+              <div className={styles.warper__container}>
+                {this.renderSyncStatusCard()}
+              </div>
             </div>
-            <div className={styles.warper__container}>
-              {this.renderSyncStatusCard()}
-            </div>
-          </div>
+          )}
 
           {this.renderContent()}
         </div>

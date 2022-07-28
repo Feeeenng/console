@@ -52,12 +52,13 @@ export default class BitBucketForm extends GitHubForm {
     this.setState({ bitbucketList })
   }
 
-  getCredentialsList = () => {
+  get credentialsList() {
     return [
       ...this.props.store.credentials.data.map(credential => ({
         label: credential.name,
         value: credential.name,
         type: credential.type,
+        data: credential.data,
       })),
     ]
   }
@@ -80,38 +81,34 @@ export default class BitBucketForm extends GitHubForm {
 
     this.setState({ isLoading: true })
 
-    const credentialDetail = await this.props.store.getCredentialDetail({
-      cluster,
-      devops,
-      credential_id: this.credentialId,
-    })
+    const credentialDetail = this.credentialsList.find(
+      item => item.value === this.credentialId
+    )
 
-    if (!isEmpty(credentialDetail)) {
-      await this.props.store
-        .creatBitBucketServers({
-          cluster,
-          devops,
-          credentialId: this.credentialId,
-          apiUrl: data.apiUrl,
-          credentialDetail,
-        })
-        .finally(() => {
-          this.setState({ isLoading: false })
-        })
-    } else {
-      this.setState({ isLoading: false })
-    }
+    await this.props.store
+      .creatBitBucketServers({
+        cluster,
+        devops,
+        apiUrl: data.apiUrl,
+        secretName: this.credentialId,
+        secretNamespace: devops,
+        ...credentialDetail.data,
+      })
+      .finally(() => {
+        this.setState({ isLoading: false })
+      })
   }
 
-  handleSubmit = e => {
+  handleSubmit = index => {
     const { tokenFormData } = this.props.store
-    const index = e.currentTarget.dataset && e.currentTarget.dataset.repoIndex
 
     const data = {
       [REPO_KEY_MAP[this.scmType]]: {
         repo: get(this.repoListData, `${index}.name`), // repo
         credential_id: this.credentialId,
-        owner: get(this.orgList[this.activeRepoIndex], 'key'),
+        owner:
+          get(this.orgList[this.activeRepoIndex], 'key') ||
+          get(toJS(this.orgList), `data[${this.activeRepoIndex}].name`),
         api_uri: get(tokenFormData, 'apiUrl'),
         discover_branches: 1,
         discover_pr_from_forks: { strategy: 2, trust: 2 },
@@ -174,7 +171,7 @@ export default class BitBucketForm extends GitHubForm {
           >
             <Select
               name="credentialId"
-              options={this.getCredentialsList()}
+              options={this.credentialsList}
               pagination={pick(credentials, ['page', 'limit', 'total'])}
               isLoading={credentials.isLoading}
               onFetch={this.getCredentialsListData}

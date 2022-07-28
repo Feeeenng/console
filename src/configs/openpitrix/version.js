@@ -21,11 +21,12 @@ export const DEFAULT_QUERY_STATUS =
 
 export const STATUS_TRANSFER_MAP = {
   active: 'active',
-  suspended: 'recalled',
-  suspend: 'recall',
+  suspended: 'suspended',
+  suspend: 'suspending',
   submitted: 'submitted',
   passed: 'passed',
-  developing: 'developing',
+  draft: 'draft',
+  rejected: 'rejected',
 }
 
 export const STATUS_TO_ICON = {
@@ -64,12 +65,12 @@ export const HANDLE_TYPE_TO_SHOW = {
 }
 
 export const ACTION_TO_NAME = {
-  submit: 'SUBMIT_FOR_RELEASE',
+  submit: 'SUBMIT_FOR_REVIEW',
   cancel: 'CANCEL_SUBMISSION',
-  release: 'RELEASE_TO_STORE',
+  release: 'RELEASE',
   view: 'VIEW_IN_STORE',
-  suspend: 'SUSPEND_VERSION',
-  recover: 'ACTIVATE_VERSION',
+  suspend: 'SUSPEND',
+  recover: 'RELEASE',
 }
 
 export const REVIEW_PASS_ACTIONS = [

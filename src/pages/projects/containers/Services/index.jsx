@@ -22,7 +22,7 @@ import { Avatar, Text } from 'components/Base'
 import Banner from 'components/Cards/Banner'
 import { withProjectList, ListPage } from 'components/HOCs/withList'
 import Table from 'components/Tables/List'
-import ServiceAccess from 'projects/components/ServiceAccess'
+import { Tooltip } from '@kube-design/components'
 
 import { getLocalTime, getDisplayName } from 'utils'
 import { ICON_TYPES, SERVICE_TYPES } from 'utils/constants'
@@ -168,6 +168,7 @@ export default class Services extends React.Component {
         sorter: true,
         sortOrder: getSortOrder('name'),
         search: true,
+        width: '20%',
         render: (name, record) => (
           <Avatar
             icon={ICON_TYPES[module]}
@@ -183,7 +184,7 @@ export default class Services extends React.Component {
         title: t('SERVICE_TYPE_TCAP'),
         dataIndex: 'annotations["kubesphere.io/serviceType"]',
         isHideable: true,
-        width: '16%',
+        width: '15%',
         render: (serviceType, record) => (
           <Text
             title={
@@ -200,14 +201,28 @@ export default class Services extends React.Component {
         dataIndex: 'app',
         isHideable: true,
         search: true,
-        width: '22%',
+        width: '15%',
+      },
+      {
+        title: t('INTERNAL_ACCESS_PL'),
+        dataIndex: 'clusterIP',
+        isHideable: true,
+        width: '15%',
+        render: (_, record) => {
+          return (
+            <Text
+              title={record.clusterIP || ''}
+              description={t(`${record.type}`)}
+            />
+          )
+        },
       },
       {
         title: t('EXTERNAL_ACCESS'),
         dataIndex: 'specType',
         isHideable: true,
         width: '20%',
-        render: (_, record) => <ServiceAccess data={record} />,
+        render: (_, record) => this.renderExternalService(record),
       },
       {
         title: t('CREATION_TIME_TCAP'),
@@ -215,10 +230,48 @@ export default class Services extends React.Component {
         sorter: true,
         sortOrder: getSortOrder('createTime'),
         isHideable: true,
-        width: 150,
+        width: '15%',
         render: time => getLocalTime(time).format('YYYY-MM-DD HH:mm:ss'),
       },
     ]
+  }
+
+  renderExternalService = data => {
+    const text = {
+      des: '-',
+      title: '-',
+    }
+
+    if (data.specType === 'NodePort') {
+      text.des = t('NODE_PORTS_SCAP')
+      text.title = data.ports
+        .filter(port => port.nodePort)
+        .map(port => `${port.nodePort}/${port.protocol}`)
+        .join('; ')
+    }
+
+    if (data.specType === 'LoadBalancer') {
+      text.des =
+        data.loadBalancerIngress.length > 1
+          ? t('LOAD_BALANCERS_SCAP')
+          : t('LOAD_BALANCER_SCAP')
+      text.title = data.loadBalancerIngress.join('; ')
+    }
+
+    if (data.externalName) {
+      return (
+        <Text
+          description={text.des}
+          title={() => (
+            <Tooltip content={data.externalName}>
+              <span>{text.title}</span>
+            </Tooltip>
+          )}
+        />
+      )
+    }
+
+    return <Text description={t(`${text.des}`)} title={text.title} />
   }
 
   showCreate = () => {

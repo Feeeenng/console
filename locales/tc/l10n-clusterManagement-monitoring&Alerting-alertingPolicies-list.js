@@ -22,7 +22,7 @@ module.exports = {
   REQUESTS_FOR_TRIGGER_AN_ALARM_Q: '如何觸發告警訊息？',
   REQUESTS_FOR_TRIGGER_AN_ALARM_A: '您需要對資源設置告警策略，當資源的某項指標達到告警策略的閥值後即會觸發告警訊息。',
   // List
-  ALERTING_STATUS: 'Alerting Status',
+  ALERTING_STATUS: '告警狀態',
   ALERTING_POLICY_EMPTY_DESC: '請創建一個告警規則。',
   ALERT_RULE_INACTIVE: '未觸發',
   ALERT_RULE_PENDING: '待觸發',
@@ -44,6 +44,7 @@ module.exports = {
   // List > Create > Rule Settings > Rule Template
   RULE_SETTINGS: '規則設置',
   MONITORING_TARGETS: '監控目標',
+  ACTIVATION_CONDITION: 'Activation Condition',
   CPU_USAGE_SCAP: 'CPU 用量',
   DISK_READ_IOPS: '本地磁碟讀取 IOPS',
   DISK_READ_THROUGHPUT: '本地磁碟讀取吞吐量',
@@ -56,7 +57,7 @@ module.exports = {
   MEMORY_USAGE_SCAP: '記憶體用量',
   DATA_RECEIVE_RATE: '網路接收數據速率',
   DATA_SEND_RATE: '網路發送數據速率',
-  SET_RULE_DESC: '請設置告警規則。',
+  SET_ACTIVATION_CONDITION_DESC: 'Please set an activation condition.',
   ABNORMAL_PODS: '容器組異常率',
   POD_USAGE_SCAP: '容器組利用率',
   THRESHOLD: '閾值',

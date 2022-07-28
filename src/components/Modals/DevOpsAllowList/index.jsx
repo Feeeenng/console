@@ -20,15 +20,14 @@ import React from 'react'
 import { ArrayInput } from 'components/Inputs'
 
 import PropTypes from 'prop-types'
-import { Icon, Form, Select } from '@kube-design/components'
-import { Modal } from 'components/Base'
-import { get } from 'lodash'
+import { Form, Loading } from '@kube-design/components'
+import { Modal, Empty } from 'components/Base'
+import { get, isUndefined } from 'lodash'
 import DevopsStore from 'stores/devops'
-import CodeStore from 'stores/codeRepo'
 import CDStore from 'stores/cd'
 import { toJS } from 'mobx'
 import Destinations from './Destinations'
-import styles from './index.scss'
+import CodeRepoSelect from './CodeRepoSelect'
 
 export default class CDAllowListModal extends React.Component {
   static propTypes = {
@@ -51,33 +50,24 @@ export default class CDAllowListModal extends React.Component {
     formTemplate: {},
     options: [],
     clusters: [],
+    isLoading: false,
   }
 
   store = new DevopsStore()
-
-  codeStore = new CodeStore()
 
   cdStore = new CDStore()
 
   formRef = React.createRef()
 
   componentDidMount() {
-    this.initFormTemplate()
-    this.fetchClusters()
-    this.getRepoList()
+    this.init()
   }
 
-  getRepoList = async () => {
-    const { devops } = this.props
-    await this.codeStore.fetchList({ devops, limit: -1 })
-    const options = this.codeStore.list.data.map(item => {
-      return {
-        label: item.name,
-        value: item.repoURL,
-        icon: item.provider,
-      }
-    })
-    this.setState({ options })
+  init = async () => {
+    this.setState({ isLoading: true })
+    await this.initFormTemplate()
+    await this.fetchClusters()
+    this.setState({ isLoading: false })
   }
 
   fetchClusters = async () => {
@@ -87,7 +77,14 @@ export default class CDAllowListModal extends React.Component {
       value: item.name,
       server: item.server,
     }))
-    this.setState({ clusters })
+
+    const allItem = {
+      label: t('ALL'),
+      value: '*',
+      server: '*',
+    }
+
+    this.setState({ clusters: [allItem, ...clusters] })
   }
 
   initFormTemplate = () => {
@@ -114,6 +111,11 @@ export default class CDAllowListModal extends React.Component {
         if (arr.includes(item)) {
           return callback({ message: t('CODE_REPOSITORY_EXIST_DESC') })
         }
+
+        if (!item) {
+          return callback({ message: t('REPO_EMPTY_DESC') })
+        }
+
         arr.push(item)
       })
     }
@@ -129,25 +131,30 @@ export default class CDAllowListModal extends React.Component {
     if (value.length > 0) {
       const data = []
       value.forEach(item => {
-        if (data.includes(item.namespace)) {
+        const isExit = data.find(destination => {
+          return (
+            destination.namespace === item.namespace &&
+            destination.cluster === item.name
+          )
+        })
+
+        if (!isUndefined(isExit)) {
           return callback({ message: t('DEPLOYMENT_LOCATION_EXIST_DESC') })
         }
-        data.push(item.namespace)
+
+        if (item.name && !item.namespace) {
+          return callback({ message: t('PROJECT_NOT_SELECT_DESC') })
+        }
+
+        data.push({ namespace: item.namespace, cluster: item.name })
       })
     }
 
     callback()
   }
 
-  repoOptionRenderer = option => type => (
-    <span className={styles.option}>
-      <Icon name={option.icon} type={type === 'value' ? 'dark' : 'light'} />
-      {option.label}
-    </span>
-  )
-
   render() {
-    const { visible, onCancel, onOk } = this.props
+    const { visible, onCancel, onOk, devops, cluster } = this.props
 
     return (
       <Modal.Form
@@ -159,43 +166,42 @@ export default class CDAllowListModal extends React.Component {
         visible={visible}
         formRef={this.formRef}
       >
-        <Form.Item
-          label={t('CODE_REPO_PL')}
-          rules={[{ validator: this.sourceReposValidator }]}
-        >
-          <ArrayInput
-            name="spec.argo.sourceRepos"
-            addText={t('ADD')}
-            itemType="string"
-            checkItemValid={this.checkItemValid}
-          >
-            <Select
-              style={{ maxWidth: '100%' }}
-              placeholder=" "
-              options={this.state.options}
-              valueRenderer={option => this.repoOptionRenderer(option)('value')}
-              optionRenderer={option =>
-                this.repoOptionRenderer(option)('option')
-              }
-            />
-          </ArrayInput>
-        </Form.Item>
-        <Form.Item
-          label={t('DEPLOYMENT_LOCATION_PL')}
-          rules={[{ validator: this.destinationsValidator }]}
-        >
-          <ArrayInput
-            name="spec.argo.destinations"
-            itemType="object"
-            addText={t('ADD')}
-            checkItemValid={this.checkDestinationsValid}
-          >
-            <Destinations
-              clusters={this.state.clusters}
-              formtemplate={this.state.formTemplate}
-            />
-          </ArrayInput>
-        </Form.Item>
+        {this.state.isLoading ? (
+          <Loading spinning={this.state.isLoading}>
+            <Empty desc={'NO_DATA'} />
+          </Loading>
+        ) : (
+          <>
+            <Form.Item
+              label={t('CODE_REPO_PL')}
+              rules={[{ validator: this.sourceReposValidator }]}
+            >
+              <ArrayInput
+                name="spec.argo.sourceRepos"
+                addText={t('ADD')}
+                itemType="string"
+                checkItemValid={this.checkItemValid}
+              >
+                <CodeRepoSelect devops={devops} cluster={cluster} />
+              </ArrayInput>
+            </Form.Item>
+            <Form.Item
+              label={t('DEPLOYMENT_LOCATION_PL')}
+              rules={[{ validator: this.destinationsValidator }]}
+            >
+              <ArrayInput
+                name="spec.argo.destinations"
+                itemType="object"
+                addText={t('ADD')}
+              >
+                <Destinations
+                  clusters={this.state.clusters}
+                  formtemplate={this.state.formTemplate}
+                />
+              </ArrayInput>
+            </Form.Item>
+          </>
+        )}
       </Modal.Form>
     )
   }

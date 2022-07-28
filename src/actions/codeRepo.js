@@ -29,26 +29,31 @@ const getRepoUrl = (repoType, repo) => {
     case 'gitlab':
       return `${repo.server_name}/${repo.repo}`
     case 'bitbucket_server':
-      return `${repo.api_uri}/${repo.repo}`
+      // eslint-disable-next-line no-case-declarations
+      const uri = repo.api_uri
+      // eslint-disable-next-line no-case-declarations
+      let url = uri.substr(uri.length - 1) === '/' ? uri : `${uri}/`
+      if (!/https:\/\/bitbucket.org\/?/gm.test(url)) {
+        url += 'scm/'
+      }
+      return `${url}${repo.owner}/${repo.repo}`
     default:
       return repo.repo || repo.url || repo.remote
   }
 }
 
-const handleFormData = ({ data, module, devops, formTemplate }) => {
+const handleFormData = ({ data, module, devops }) => {
   const postData = FORM_TEMPLATES[module]({ namespace: devops })
   const repoType = data.sources.source_type
   const repo = get(data, `sources.${repoType}_source`, {})
   const repoURL = repo.repo || repo.url || repo.remote
-  let isEditCodeURl = false
+  let url = ''
 
-  if (formTemplate) {
-    const editRepo = get(formTemplate, `sources.${repoType}_source`, {})
-    const editRepoURL = editRepo.repo || editRepo.url || editRepo.remote
-    isEditCodeURl = editRepoURL === repoURL
+  if (repoType === 'github' && /^https:\/\//.test(repoURL)) {
+    url = repoURL
+  } else {
+    url = getRepoUrl(repoType, repo)
   }
-
-  const url = !isEditCodeURl ? getRepoUrl(repoType, repo) : repoURL
 
   const spec = {
     provider: data.sources.source_type,
@@ -71,7 +76,7 @@ export default {
         onOk: async data => {
           const postData = handleFormData({ data, module, devops })
 
-          await store.create({ data: postData, devops })
+          await store.create({ data: postData, devops, cluster })
 
           Notify.success({ content: t('CREATE_SUCCESSFUL') })
           success && success()
@@ -111,10 +116,14 @@ export default {
             data,
             module,
             devops,
-            formTemplate: editTemplate,
           })
 
-          await store.edit({ data: postData, devops, name: detail.name })
+          await store.edit({
+            data: postData,
+            devops,
+            name: detail.name,
+            cluster,
+          })
 
           Notify.success({ content: t('UPDATE_SUCCESSFUL') })
           success && success()

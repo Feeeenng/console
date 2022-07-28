@@ -65,8 +65,8 @@ export default class Select extends React.Component {
   }
 
   toggleShowOptions = () => {
-    this.setState(({ showOptions }) => {
-      !showOptions
+    this.setState({
+      showOptions: !this.state.showOptions,
     })
   }
 
@@ -144,10 +144,10 @@ export default class Select extends React.Component {
           { [styles.disabled]: disabled },
           className
         )}
+        onClick={this.toggleShowOptions}
       >
         <Dropdown
           closeAfterClick={false}
-          onClick={this.toggleShowOptions}
           visible={this.state.showOptions}
           onOpen={this.handleShowOptions}
           onClose={this.handleHideOptions}

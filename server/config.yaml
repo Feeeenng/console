@@ -37,6 +37,7 @@ server:
 client:
   title: KubeSphere
   description: ""
+  encryptKey: kubesphere
 
   version:
     kubesphere: 3.1.0
@@ -85,8 +86,8 @@ client:
   # platform management navigations
   globalNavs:
     - name: clusters
-      title: CLUSTERS_MANAGEMENT
-      desc: CLUSTERS_MANAGE_DESC
+      title: CLUSTER_MANAGEMENT
+      desc: CLUSTER_DESC
       icon: cluster
     - name: access
       title: ACCESS_CONTROL
@@ -117,7 +118,11 @@ client:
           icon: nodes
           children:
             - { name: nodes, title: CLUSTER_NODE_PL }
-            - { name: edgenodes, title: EDGE_NODE_PL, clusterModule: edgeruntime }
+            - {
+                name: edgenodes,
+                title: EDGE_NODE_PL,
+                clusterModule: edgeruntime,
+              }
         - { name: components, title: SYSTEM_COMPONENT_PL, icon: components }
         - { name: projects, title: PROJECT_PL, icon: project }
         - name: app-workloads
@@ -170,10 +175,12 @@ client:
           icon: database
           children:
             - { name: volumes, title: PERSISTENT_VOLUME_CLAIM_PL }
+            - { name: storageclasses, title: STORAGE_CLASS_PL }
             - {
                 name: volume-snapshots,
                 title: VOLUME_SNAPSHOT_PL,
                 authKey: volumes,
+                requiredClusterVersion: v3.3.0,
               }
             - {
                 name: volume-snapshot-classes,
@@ -181,7 +188,6 @@ client:
                 authKey: volumes,
                 requiredClusterVersion: v3.3.0,
               }
-            - { name: storageclasses, title: STORAGE_CLASS_PL }
         - name: monitoring-alerting
           title: MONITORING_AND_ALERTING
           icon: monitor
@@ -345,7 +351,7 @@ client:
       items:
         - { name: store, title: APPS, icon: appcenter }
         - { name: categories, title: APP_CATEGORY_PL, icon: tag }
-        - { name: reviews, title: APP_RELEASE, icon: safe-notice }
+        - { name: reviews, title: APP_REVIEW, icon: safe-notice }
 
   # project page navigations
   projectNavs:
@@ -507,12 +513,14 @@ client:
             title: CONTINUOUS_DEPLOYMENT_PL,
             icon: rocket,
             authKey: "applications",
+            requiredClusterVersion: v3.3.0,
           }
         - {
             name: code-repo,
             title: CODE_REPO_PL,
             icon: code,
             authKey: "gitrepositories",
+            requiredClusterVersion: v3.3.0,
           }
         - name: management
           title: DEVOPS_PROJECT_SETTINGS
@@ -609,7 +617,7 @@ client:
     storageclasses: /cluster-administration/persistent-volume-and-storage-class/
 
     # DevOps User Guide
-    pipelines: /devops-user-guide/how-to-use/pipeline-settings/
+    pipelines: /devops-user-guide/how-to-use/pipelines/pipeline-settings/
     cridentials: /devops-user-guide/how-to-use/credential-management/
 
     # Developer Guide
@@ -630,6 +638,9 @@ client:
     mail:
       max_number_of_eamil: 50
     dingtalk:
+      max_number_of_cid: 20
+      max_number_of_keyword: 20
+    feishu:
       max_number_of_cid: 20
       max_number_of_keyword: 20
     wecom:

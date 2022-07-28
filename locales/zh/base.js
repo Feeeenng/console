@@ -16,7 +16,6 @@
  * along with KubeSphere Console.  If not, see <https://www.gnu.org/licenses/>.
  */
 module.exports = {
-  NUMBER_OF_PODS: '容器组数量',
   STRATEGY_PL: '策略',
   // Cluster Node List
   CORE: '核',
@@ -58,8 +57,6 @@ module.exports = {
   Collapse: '收起',
   Completed: '已完成',
   Configuration: '配置',
-  CONFIGURATION_CENTER: '配置管理',
-  STORAGE_MANAGEMENT: '存储管理',
   Confirm: '确认',
   Container: '容器',
   Containers: 'Containers',
@@ -137,7 +134,6 @@ module.exports = {
   MilliSeconds: '毫秒',
   Minutes: '分钟',
   'MMMM Do YYYY': 'YYYY 年 M 月 DD 日',
-  'MONITORING_&_ALERTING': '监控告警',
   Monitors: '监控',
   More: '更多',
   name: '名称',
@@ -214,7 +210,6 @@ module.exports = {
   secret: '密钥',
   secret_text: '秘密文本',
   Service: '服务',
-  NUMBER_OF_SERVICES: '服务数量',
   'Service Components': '服务组件',
   'Session timeout or this account is logged in elsewhere, please login again':
     '会话超时或此帐户在其它地方登录，请重新登录',
