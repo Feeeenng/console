@@ -72,19 +72,19 @@ export default class ConditionSelect extends React.Component {
   get operators() {
     return [
       {
-        label: t('INCLUDES_VALUES'),
+        label: t('CONTAIN'),
         value: 'In',
       },
       {
-        label: t('DOES_NOT_INCLUDE_VALUES'),
+        label: t('NOT_CONTAIN'),
         value: 'NotIn',
       },
       {
-        label: t('EXISTS'),
+        label: t('EXIST'),
         value: 'Exists',
       },
       {
-        label: t('DOES_NOT_EXIST'),
+        label: t('NOT_EXIST'),
         value: 'DoesNotExist',
       },
     ]
@@ -207,7 +207,7 @@ export default class ConditionSelect extends React.Component {
           name="key"
           value={key}
           options={keyItems}
-          placeholder={t('LABEL')}
+          placeholder={t('KEY')}
           onChange={this.handleKeyChange}
           dorpdownRender={this.dorpdownRender}
         />

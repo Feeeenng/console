@@ -17,7 +17,7 @@
  */
 
 import React from 'react'
-import { Button, Loading, Tooltip } from '@kube-design/components'
+import { Button, Loading, Notify, Tooltip } from '@kube-design/components'
 import { toJS } from 'mobx'
 import { observer, inject } from 'mobx-react'
 import { isEmpty, debounce } from 'lodash'
@@ -57,13 +57,27 @@ export default class Pipeline extends React.Component {
     ]
   }
 
+  get isValidated() {
+    return (
+      this.store.pipelineConfig.metadata.annotations[
+        'pipeline.devops.kubesphere.io/jenkinsfile.validate'
+      ] !== 'failure'
+    )
+  }
+
+  get jenkinsFile() {
+    const { pipelineConfig } = this.store
+    return toJS(pipelineConfig.spec.pipeline.jenkinsfile)
+  }
+
   get isMultibranch() {
     const { detailStore } = this.props
     return toJS(detailStore.detail.isMultiBranch)
   }
 
   handlePipelineModal = () => {
-    const { pipelineJsonData } = this.store
+    const { pipelineJsonData, pipelineConfig } = this.store
+    const defaultValue = toJS(pipelineConfig.spec.pipeline.jenkinsfile)
     const { params } = this.props.match
 
     this.trigger('pipeline.pipelineTemplate', {
@@ -77,30 +91,67 @@ export default class Pipeline extends React.Component {
       contentWidth: '960px',
       noCodeEdit: true,
       params,
-      success: jenkinsFile => {
-        this.trigger('pipeline.pipelineCreate', {
-          store: this.store,
-          jsonData: jenkinsFile,
-          params,
-          success: () => {
-            const { devops, name } = params
-            localStorage.removeItem(
-              `${globals.user.username}-${devops}-${name}`
+      onCancel: () => this.handleReset(defaultValue),
+      success: ({ jenkinsFile, jsonData, mode, template }) => {
+        if (template === 'custom') {
+          this.trigger('pipeline.pipelineCreate', {
+            store: this.store,
+            jsonData: {},
+            params,
+            onCancel: () => this.handleReset(defaultValue),
+            success: () => {
+              const { devops, name } = params
+              localStorage.removeItem(
+                `${globals.user.username}-${devops}-${name}`
+              )
+              this.handleRefresh()
+            },
+          })
+        } else if (!mode) {
+          this.store.updateJenkinsFile(jenkinsFile)
+          if (!isEmpty(jsonData)) {
+            this.store.setPipelineJsonData(jsonData)
+            this.handleEditorPipelineModal(undefined, () =>
+              this.handleReset(defaultValue)
             )
-            this.handleRefresh()
-          },
-        })
+          } else {
+            this.handleJenkinsFileModal(undefined, () =>
+              this.handleReset(defaultValue)
+            )
+          }
+        } else {
+          Notify.success({ content: t('CREATE_SUCCESSFUL') })
+          this.handleRefresh()
+        }
       },
     })
   }
 
-  handleEditorPipelineModal = () => {
+  handleReset = () => {
+    const { params } = this.props.match
+    const { devops, name } = params
+    clearTimeout(this.store.timer)
+    request
+      .put(
+        `/kapis/devops.kubesphere.io/v1alpha3/devops/${devops}/pipelines/${name}/jenkinsfile?mode=raw`,
+        { data: '' },
+        {
+          headers: {
+            'content-type': 'application/json',
+          },
+        }
+      )
+      .then(this.handleRefresh)
+  }
+
+  handleEditorPipelineModal = (e, cb) => {
     const { pipelineJsonData } = this.store
     const { params } = this.props.match
 
     this.trigger('pipeline.pipelineCreate', {
       store: this.store,
       jsonData: toJS(pipelineJsonData.pipelineJson),
+      onCancel: cb,
       params,
       success: () => {
         const { devops, name } = params
@@ -110,13 +161,14 @@ export default class Pipeline extends React.Component {
     })
   }
 
-  handleJenkinsFileModal = () => {
+  handleJenkinsFileModal = (e, cb) => {
     const { pipelineConfig } = this.store
     const { params } = this.props.match
 
     this.trigger('pipeline.jenkins', {
       store: this.store,
       defaultValue: toJS(pipelineConfig.spec.pipeline.jenkinsfile),
+      onCancel: cb,
       params,
       success: () => {
         const { devops, name } = params
@@ -133,13 +185,26 @@ export default class Pipeline extends React.Component {
     await this.store.getJenkinsFile({ ...params, name: decodeName })
 
     this.store.getActivities(params)
+    if (this.jenkinsFileMode) {
+      this.handleRefresh()
+    }
   }
 
-  handleRefresh = () => {
+  handleRefresh = async () => {
     const { params } = this.props.match
     const decodeName = decodeURIComponent(params.name)
-
-    this.store.getJenkinsFile({ ...params, name: decodeName }, true)
+    await this.store.getJenkinsFile({ ...params, name: decodeName }, true)
+    if (this.jenkinsFileMode) {
+      this.store
+        .fetchDetailUntilEditModeNull({
+          ...params,
+          name: decodeName,
+        })
+        .then(res => {
+          this.store.detail = res
+          this.store.setPipelineConfig(res._originData)
+        })
+    }
   }
 
   componentDidMount() {
@@ -150,11 +215,12 @@ export default class Pipeline extends React.Component {
     this.getData()
   }
 
-  handleRunning = debounce(() => {
+  handleRunning = debounce(async () => {
+    const { params } = this.props.match
+    await this.store.fetchDetail(params)
     const { detail } = this.store
     const isMultibranch = !isEmpty(toJS(detail.branchNames))
     const hasParameters = !isEmpty(toJS(detail.parameters))
-    const { params } = this.props.match
 
     if (isMultibranch || hasParameters) {
       this.trigger('pipeline.params', {
@@ -223,7 +289,6 @@ export default class Pipeline extends React.Component {
 
   renderPipeLineContent() {
     const { pipelineJson, isLoading } = this.store.pipelineJsonData
-
     if (isLoading) {
       return (
         <Loading spinning>
@@ -232,33 +297,9 @@ export default class Pipeline extends React.Component {
       )
     }
 
-    if (isEmpty(toJS(pipelineJson))) {
+    if (this.jenkinsFileMode && this.jenkinsFileMode === 'raw') {
       return (
-        <EmptyCard desc={t('NO_PIPELINE_CONFIG_FILE_TIP')}>
-          {this.editable && (
-            <>
-              <Button
-                onClick={this.handleJenkinsFileModal}
-                disabled={this.jenkinsFileMode === 'json'}
-              >
-                {t('EDIT_JENKINSFILE')}
-              </Button>
-              <Button
-                type="control"
-                onClick={this.handlePipelineModal}
-                disabled={this.jenkinsFileMode === 'raw'}
-              >
-                {t('EDIT_PIPELINE')}
-              </Button>
-            </>
-          )}
-        </EmptyCard>
-      )
-    }
-
-    if (pipelineJson.result === 'failure') {
-      return (
-        <EmptyCard desc={t('INVALID_JENKINSFILE_TIP')}>
+        <EmptyCard desc={t('JENKINS_UNAVAILABLE')}>
           {this.editable && (
             <>
               <Button
@@ -269,6 +310,50 @@ export default class Pipeline extends React.Component {
               </Button>
               <Button type="control" onClick={this.handleRunning}>
                 {t('RUN')}
+              </Button>
+            </>
+          )}
+        </EmptyCard>
+      )
+    }
+
+    if (!this.store.detail?.validate || pipelineJson?.result === 'failure') {
+      return (
+        <EmptyCard desc={t('INVALID_JENKINSFILE_TIP')}>
+          {this.editable && (
+            <>
+              <Button
+                onClick={this.handleJenkinsFileModal}
+                // disabled={this.jenkinsFileMode === 'json'}
+              >
+                {t('EDIT_JENKINSFILE')}
+              </Button>
+              <Button type="control" onClick={this.handleRunning}>
+                {t('RUN')}
+              </Button>
+            </>
+          )}
+        </EmptyCard>
+      )
+    }
+
+    if (isEmpty(toJS(pipelineJson)) || !this.jenkinsFile) {
+      return (
+        <EmptyCard desc={t('NO_PIPELINE_CONFIG_FILE_TIP')}>
+          {this.editable && (
+            <>
+              <Button
+                onClick={this.handleJenkinsFileModal}
+                // disabled={this.jenkinsFileMode === 'json'}
+              >
+                {t('EDIT_JENKINSFILE')}
+              </Button>
+              <Button
+                type="control"
+                onClick={this.handlePipelineModal}
+                // disabled={this.jenkinsFileMode === 'raw'}
+              >
+                {t('EDIT_PIPELINE')}
               </Button>
             </>
           )}

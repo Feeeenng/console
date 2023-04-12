@@ -720,6 +720,10 @@ const GatewayMapper = item => {
     ''
   )
 
+  // get the first ipv4 ingress's ip, because the k8s can't support ipv6's colon
+  const defaultIngressIPV4 = loadBalancerIngress.find(i => !i.ip.includes(':'))
+    ?.ip
+
   return {
     ...getBaseInfo(item),
     namespace: get(item, 'metadata.namespace'), // it's not metadata.namespace
@@ -731,8 +735,7 @@ const GatewayMapper = item => {
     ports: get(item, 'status.service', []),
     loadBalancerIngress: loadBalancerIngress.map(lb => lb.ip || lb.hostname),
     defaultIngress:
-      get(loadBalancerIngress, '[0].ip') ||
-      get(loadBalancerIngress, '[0].hostname'),
+      defaultIngressIPV4 || get(loadBalancerIngress, '[0].hostname'),
     isHostName: !!get(loadBalancerIngress, '[0].hostname'),
     serviceMeshEnable:
       get(
@@ -1236,6 +1239,7 @@ const PipelinesMapper = item => {
     ),
     name,
     isMultiBranch: get(item, 'spec.type', '') === 'multi-branch-pipeline',
+    type: get(item, 'spec.type', ''),
     numberOfPipelines: 0,
     numberOfFolders: 0,
     pipelineFolderNames: [],
@@ -1248,6 +1252,12 @@ const PipelinesMapper = item => {
     parameters: [],
     disabled: false,
     weatherScore: 100,
+    validate:
+      get(
+        item,
+        'metadata.annotations["pipeline.devops.kubesphere.io/jenkinsfile.validate"]',
+        'success'
+      ) === 'success',
     ...pipelineObject,
     _originData: getOriginData(item),
   }
@@ -1373,6 +1383,22 @@ const CDSMapper = item => {
     })
   }
 
+  // fluxcd
+  const fluxAppType = get(item, 'metadata.labels.["gitops.kubepshere.io/type"]')
+  const fluxAppReadyNum = get(
+    item,
+    'metadata.labels.["gitops.kubesphere.io/ready-number"]'
+  )
+  const fluxLastRevision = get(
+    item,
+    'metadata.annotations.["gitops.kubesphere.io/last-revision"]'
+  )
+  const fluxApp = get(item, 'spec.fluxApp', {})
+  const fluxSource = get(fluxApp, 'spec.source.sourceRef')
+  const fluxStatus = get(item, 'status.fluxApp', {})
+  const fluxHelmReleaseStatus = get(fluxStatus, 'helmReleaseStatus', {})
+  const fluxKustomizationStatus = get(fluxStatus, 'kustomizationStatus', {})
+
   return {
     ...getBaseInfo(item),
     syncStatus,
@@ -1384,6 +1410,12 @@ const CDSMapper = item => {
     operation,
     syncType,
     syncOptions: _syncOptions,
+    fluxAppType,
+    fluxAppReadyNum,
+    fluxLastRevision,
+    fluxSource,
+    fluxHelmReleaseStatus,
+    fluxKustomizationStatus,
     _originData: getOriginData(omit(item, 'devops')),
   }
 }

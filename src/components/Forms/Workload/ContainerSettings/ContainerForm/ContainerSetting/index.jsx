@@ -18,7 +18,7 @@
 
 import React from 'react'
 import { get, isEmpty } from 'lodash'
-import { generateId, parseDockerImage, gpuLimitsArr } from 'utils'
+import { generateId, gpuLimitsArr } from 'utils'
 
 import { PATTERN_NAME } from 'utils/constants'
 
@@ -117,27 +117,16 @@ export default class ContainerSetting extends React.Component {
 
   limitError = ''
 
-  getFormTemplate(data, imageRegistries) {
-    if (data && data.image && !data.pullSecret) {
-      const { registry, namespace } = parseDockerImage(data.image)
+  getFormTemplate(data) {
+    if (data && data.image) {
+      if (!data.pullSecret) {
+        const annotationOfImagePullSecrets = data.annotationOfImagePullSecrets
 
-      if (registry) {
-        const reg = imageRegistries.find(({ url }) => {
-          url = url.endsWith('/') ? url.slice(0, -1) : url
-          const regUrl = url.replace(/^https?:\/\//, '')
-          const registryData = regUrl.split('/')
-
-          if (registry === registryData[0]) {
-            return (
-              (namespace && registryData[1] && registryData[1] === namespace) ||
-              (!namespace && !registryData[1])
-            )
-          }
-          return false
-        })
-
-        if (reg) {
-          data.pullSecret = reg.value
+        if (
+          !isEmpty(data.annotationOfImagePullSecrets) &&
+          annotationOfImagePullSecrets[data.name]
+        ) {
+          data.pullSecret = annotationOfImagePullSecrets[data.name]
         }
       }
     }
@@ -154,7 +143,7 @@ export default class ContainerSetting extends React.Component {
   )
 
   renderImageForm = () => {
-    const { data, namespace } = this.props
+    const { data, namespace, cluster } = this.props
     const imageRegistries = this.imageRegistries
     const formTemplate = this.getFormTemplate(data, imageRegistries)
 
@@ -165,6 +154,7 @@ export default class ContainerSetting extends React.Component {
         namespace={namespace}
         formTemplate={formTemplate}
         imageRegistries={imageRegistries}
+        cluster={cluster}
       />
     )
   }
@@ -185,7 +175,7 @@ export default class ContainerSetting extends React.Component {
       .map(({ name }) => name)
       .filter(i => i !== this.state.originName)
     if (containerNames.includes(value)) {
-      callback({ message: t('DUPLICATE_CONTAINER_NAME_DESC') })
+      callback({ message: t('NAME_EXIST_DESC') })
     }
     callback()
   }

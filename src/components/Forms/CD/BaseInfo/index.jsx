@@ -17,53 +17,14 @@
  */
 
 import React from 'react'
-import CodeStore from 'stores/codeRepo'
-import { pick } from 'lodash'
-import {
-  Icon,
-  Column,
-  Columns,
-  Form,
-  Input,
-  TextArea,
-  Select,
-} from '@kube-design/components'
-import { PATTERN_NAME } from 'utils/constants'
+import { Column, Columns, Form, Input, TextArea } from '@kube-design/components'
 
-import styles from './index.scss'
+import { PATTERN_NAME } from 'utils/constants'
+import Placement from '../Advance/Placement'
+
+import styles from '../Advance/index.scss'
 
 export default class BaseInfo extends React.Component {
-  codeStore = new CodeStore()
-
-  state = {
-    options: [],
-  }
-
-  componentDidMount() {
-    this.getRepoList()
-  }
-
-  getRepoList = async params => {
-    const { devops, cluster } = this.props
-    await this.codeStore.fetchList({ devops, cluster, ...params })
-    const options = this.codeStore.list.data.map(item => {
-      return {
-        label: item.name,
-        value: `${item.name}(${item.repoURL})`,
-        icon:
-          item.provider === 'bitbucket_server' ? 'bitbucket' : item.provider,
-      }
-    })
-    this.setState({ options })
-  }
-
-  repoOptionRenderer = option => type => (
-    <span className={styles.option}>
-      <Icon name={option.icon} type={type === 'value' ? 'dark' : 'light'} />
-      <span>{option.value}</span>
-    </span>
-  )
-
   render() {
     const { formRef, formTemplate } = this.props
     return (
@@ -99,22 +60,26 @@ export default class BaseInfo extends React.Component {
             </Form.Item>
           </Column>
         </Columns>
-        <Form.Item
-          label={t('CODE_REPOSITORY')}
-          rules={[{ required: true, message: t('REPO_EMPTY_DESC') }]}
-        >
-          <Select
-            name="repoURL"
-            options={this.state.options}
-            valueRenderer={option => this.repoOptionRenderer(option)('value')}
-            optionRenderer={option => this.repoOptionRenderer(option)('option')}
-            pagination={pick(this.codeStore.list, ['page', 'limit', 'total'])}
-            isLoading={this.codeStore.list.isLoading}
-            onFetch={this.getRepoList}
-            searchable
-            clearable
-          />
-        </Form.Item>
+        <div className={styles.wrapper}>
+          <h6>{t('DEPLOY_LOCATION')}</h6>
+          <div className={styles.wrapper_item}>
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: t('PROJECT_NOT_SELECT_DESC'),
+                },
+              ]}
+            >
+              <Placement
+                name="destination"
+                prefix="destination"
+                formData={formTemplate}
+                {...this.props}
+              />
+            </Form.Item>
+          </div>
+        </div>
       </Form>
     )
   }

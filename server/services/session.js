@@ -170,7 +170,7 @@ const getUserGlobalRules = async (username, token) => {
   return rules
 }
 
-const getUserDetail = async (token, clusterRole) => {
+const getUserDetail = async (token, clusterRole, isMulticluster) => {
   let user = {}
 
   const { username } = jwtDecode(token)
@@ -211,9 +211,14 @@ const getUserDetail = async (token, clusterRole) => {
 
     const isClustersRole = Object.keys(roles).includes('clusters')
 
-    if (!isClustersRole && user.grantedClusters.length > 0) {
+    if (
+      !isClustersRole &&
+      user.grantedClusters.length > 0 &&
+      isMulticluster === true
+    ) {
       roles.clusters = ['view']
     }
+
     user.globalRules = roles
   } catch (error) {}
 
@@ -363,7 +368,16 @@ const getSupportGpuList = async ctx => {
   return gpuKinds
 }
 
-const getCurrentUser = async (ctx, clusterRole) => {
+// TODO: need to get the data from kubesphere
+const getGitOpsEngine = async ctx => {
+  const token = ctx.cookies.get('token')
+  if (!token) {
+    return []
+  }
+  return 'argocd'
+}
+
+const getCurrentUser = async (ctx, clusterRole, isMulticluster) => {
   const token = ctx.cookies.get('token')
 
   if (!token) {
@@ -374,7 +388,7 @@ const getCurrentUser = async (ctx, clusterRole) => {
   }
 
   const [userDetail, workspaces] = await Promise.all([
-    getUserDetail(token, clusterRole),
+    getUserDetail(token, clusterRole, isMulticluster),
     getWorkspaces(token, clusterRole),
   ])
 
@@ -473,4 +487,5 @@ module.exports = {
   createUser,
   getClusterRole,
   getSupportGpuList,
+  getGitOpsEngine,
 }

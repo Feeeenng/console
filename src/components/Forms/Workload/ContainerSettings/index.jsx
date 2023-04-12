@@ -87,6 +87,7 @@ export default class ContainerSetting extends React.Component {
     }
 
     this.handleContainer = this.handleContainer.bind(this)
+    this.containerRef = React.createRef()
   }
 
   componentDidMount() {
@@ -98,6 +99,21 @@ export default class ContainerSetting extends React.Component {
     }
     if (store.renderScheduleTab) {
       this.props.store.setMetadata(this.formTemplate.metadata)
+    }
+  }
+
+  componentDidUpdate() {
+    const containerRef = this.containerRef.current
+    const error = get(containerRef, 'state.error', null)
+
+    const containers = get(
+      this.props.formTemplate,
+      `${this.prefix}spec.containers`,
+      []
+    )
+
+    if (error && containers.length > 0) {
+      containerRef.setState({ error: null })
     }
   }
 
@@ -395,6 +411,7 @@ export default class ContainerSetting extends React.Component {
   updatePullSecrets = () => {
     const pullSecrets = {}
     const imagePullSecretsPath = `${this.prefix}spec.imagePullSecrets`
+    const annotationsImagePullSecretsPath = `${this.prefix}metadata.annotations["kubesphere.io/imagepullsecrets"]`
 
     const containers = get(
       this.fedFormTemplate,
@@ -408,7 +425,11 @@ export default class ContainerSetting extends React.Component {
     )
     concat(containers, initContainers).forEach(container => {
       if (container.pullSecret) {
-        pullSecrets[container.pullSecret] = ''
+        pullSecrets[container.name] = container.pullSecret
+      }
+
+      if (container.annotationOfImagePullSecrets) {
+        delete container.annotationOfImagePullSecrets
       }
     })
 
@@ -416,8 +437,16 @@ export default class ContainerSetting extends React.Component {
       this.fedFormTemplate,
       imagePullSecretsPath,
       !isEmpty(pullSecrets)
-        ? Object.keys(pullSecrets).map(key => ({ name: key }))
+        ? Object.values(pullSecrets).map(value => ({ name: value }))
         : null
+    )
+
+    const pullSecretsString = JSON.stringify(pullSecrets)
+
+    set(
+      this.fedFormTemplate,
+      annotationsImagePullSecretsPath,
+      pullSecretsString
     )
   }
 
@@ -456,8 +485,8 @@ export default class ContainerSetting extends React.Component {
     const serivcePrefix = this.props.isFederated ? 'spec.template.' : ''
 
     set(serviceTemplate, `${serivcePrefix}spec.ports`, servicePorts)
-
     const labels = get(this.formTemplate, 'metadata.labels', {})
+
     const podLabels = get(
       this.fedFormTemplate,
       `${this.prefix}metadata.labels`,
@@ -694,6 +723,7 @@ export default class ContainerSetting extends React.Component {
       <Form.Item
         label={t('CONTAINERS')}
         rules={[{ validator: this.containersValidator }]}
+        ref={this.containerRef}
       >
         <ContainerList
           name={`${this.prefix}spec.containers`}
@@ -761,8 +791,19 @@ export default class ContainerSetting extends React.Component {
     const { formRef } = this.props
     const { showContainer, selectContainer } = this.state
 
+    const annotationOfImagePullSecrets = JSON.parse(
+      get(
+        this.fedFormTemplate,
+        'metadata.annotations["kubesphere.io/imagepullsecrets"]',
+        '{}'
+      )
+    )
+
     if (showContainer) {
-      return this.renderContainerForm(selectContainer)
+      return this.renderContainerForm({
+        ...selectContainer,
+        annotationOfImagePullSecrets,
+      })
     }
 
     return (

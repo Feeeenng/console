@@ -17,12 +17,15 @@
  */
 module.exports = {
   // Attributes
-  THRESHOLD_DURATION: '告警持續時間',
-  // Alerting Rule
-  ALERTING_RULE: '告警規則',
+  DURATION: 'Duration',
+  // Alert Rules
+  ALERTING_RULE: 'Alert Rules',
   MONITORING_TARGETS_SCAP: '監控目標',
-  ACTIVATION_CONDITION_SCAP: 'Activation condition',
+  TRIGGER_CONDITION_SCAP: 'Trigger condition',
   METRIC_MONITORING: '指標監控',
+  ALERT_MONITORING: 'Alert Monitoring',
+  NOTIFICATION_SUMMARY_COLON: 'Summary: ',
+  DETAILS_COLON: 'Details: ',
   // Alerting History
   NO_DATA_DESC: '未發現資料'
 };

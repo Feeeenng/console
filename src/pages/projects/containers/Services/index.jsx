@@ -17,7 +17,7 @@
  */
 
 import React from 'react'
-
+import { get } from 'lodash'
 import { Avatar, Text } from 'components/Base'
 import Banner from 'components/Cards/Banner'
 import { withProjectList, ListPage } from 'components/HOCs/withList'
@@ -202,9 +202,14 @@ export default class Services extends React.Component {
         isHideable: true,
         search: true,
         width: '15%',
+        render: (app, record) => {
+          const instance = get(record, 'labels["app.kubesphere.io/instance"]')
+          const name = get(record, 'labels["app.kubernetes.io/name"]')
+          return instance || name || '-'
+        },
       },
       {
-        title: t('INTERNAL_ACCESS_PL'),
+        title: t('INTERNAL_ACCESS'),
         dataIndex: 'clusterIP',
         isHideable: true,
         width: '15%',

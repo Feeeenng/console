@@ -36,7 +36,7 @@ import WorkloadStore from 'stores/workload'
 @withClusterList({
   store: new WorkloadStore('daemonsets'),
   module: 'daemonsets',
-  name: 'WORKLOAD',
+  name: 'DAEMONSET',
   rowKey: 'uid',
 })
 export default class DaemonSets extends React.Component {
@@ -75,7 +75,7 @@ export default class DaemonSets extends React.Component {
         text: t('STOP'),
         onClick: () =>
           trigger('resource.batch.stop', {
-            type: name.toUpperCase(),
+            type: name,
             rowKey: 'uid',
             success: rootStore.routing.query(),
           }),
@@ -217,7 +217,12 @@ export default class DaemonSets extends React.Component {
     const { match, bannerProps, tableProps } = this.props
     return (
       <ListPage {...this.props}>
-        <Banner {...bannerProps} tabs={this.tabs} />
+        <Banner
+          {...bannerProps}
+          title={t('WORKLOAD_PL')}
+          description={t('WORKLOAD_DESC')}
+          tabs={this.tabs}
+        />
         <ResourceTable
           {...tableProps}
           itemActions={this.itemActions}

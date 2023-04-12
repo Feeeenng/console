@@ -23,6 +23,7 @@ module.exports = {
   // More > Edit Autoscaling
   // More > Edit Settings > Update Strategy
   // More > Edit Settings > Containers
+  EDIT_CONTAINER: 'Edit Container',
   // More > Edit Settings > Volumes
   // More > Edit Settings > Pod Scheduling Rules
   // More > Edit YAML
@@ -33,6 +34,7 @@ module.exports = {
   // Resource Status > Replica Status
   // Resource Status > Ports
   // Resource Status > Pods
+  NODE: 'Nodo',
   // Revision Records
   SERIAL_NUMBER: 'Serial number',
   CREATED_TIME: 'Created at {diff}',
@@ -40,5 +42,7 @@ module.exports = {
   // Monitoring
   // Environment Variables
   // Events
-  EVENT_PL: 'Events'
+  EVENT_PL: 'Events',
+  EVENT_NORMAL: 'Normal',
+  EVENT_WARNING: 'Warning'
 };

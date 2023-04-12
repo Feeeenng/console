@@ -29,11 +29,10 @@ export const POD_STATUS = [
 ]
 
 export const PODS_STATUS = [
-  { text: 'PENDING', value: 'Pending' },
+  { text: 'WAITING', value: 'Waiting' },
   { text: 'RUNNING', value: 'Running' },
-  { text: 'COMPLETED', value: 'Succeeded' },
-  { text: 'FAILED', value: 'Failed' },
-  { text: 'UNKNOWN', value: 'Unknown' },
+  { text: 'COMPLETED', value: 'Completed' },
+  { text: 'ERROR', value: 'Error' },
 ]
 
 export const JOB_STATUS = [
@@ -43,9 +42,9 @@ export const JOB_STATUS = [
 ]
 
 export const S2IJOBS_STATUS = [
-  { text: 'Failed', value: 'Failed' },
-  { text: 'Successful', value: 'successful' },
-  { text: 'Running', value: 'Running' },
+  { text: 'FAILED', value: 'Failed' },
+  { text: 'SUCCESSFUL', value: 'successful' },
+  { text: 'RUNNING', value: 'Running' },
 ]
 
 export const S2I_STATUS_DESC = {
@@ -91,6 +90,21 @@ export const CD_SYNC_STATUS = [
   { text: 'SYNCED', value: 'Synced' },
   { text: 'OUTOFSYNC', value: 'OutOfSync' },
   { text: 'UNKNOWN', value: 'Unknown' },
+]
+
+export const FLUXCD_APP_TYPES = [
+  {
+    label: 'HelmRelease',
+    value: 'HelmRelease',
+    description: 'Helm Application',
+    icon: 'helm',
+  },
+  {
+    label: 'Kustomization',
+    value: 'Kustomization',
+    description: 'Kustomize or pure kubernetes manifests',
+    icon: 'kubernetes',
+  },
 ]
 
 export const PRUNE_PROPAGATION_POLICY_OPTIONS = [
@@ -592,39 +606,6 @@ export const PATTERN_APPTEMPLATE_VERSION = /[a-zA-Z0-9](\.?-?[a-zA-Z0-9])+(\s?\[
 export const PATTERN_UTC_TIME = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z/
 export const PATTERN_ENV_NAME = /^[-._a-zA-Z][-._a-zA-Z0-9]*$/
 
-export const PIPELINE_TASKS = {
-  All: [
-    'git',
-    'checkout',
-    'mail',
-    'echo',
-    'shell',
-    'withCredentials',
-    'container',
-    'archiveArtifacts',
-    'input',
-    'kubernetesDeploy',
-    'cd',
-    'timeout',
-    'withSonarQubeEnv',
-    'waitForQualityGate',
-    'script',
-  ],
-  SCM: ['git', 'checkout', 'cd'],
-  Normal: [
-    'echo',
-    'shell',
-    'mail',
-    'withCredentials',
-    'container',
-    'archiveArtifacts',
-    'kubernetesDeploy',
-    'timeout',
-    'script',
-  ],
-  Review: ['input', 'withSonarQubeEnv', 'waitForQualityGate'],
-}
-
 export const PIPELINE_CONDITIONS = [
   'branch',
   'environment',
@@ -990,7 +971,7 @@ export const API_VERSIONS = {
 export const MONITOR_GRAPH_COLORS = [
   {
     get nameI18nKey() {
-      return t('Default Color')
+      return t('DEFAULT_COLORS')
     },
     colors: [
       '#60acfc',
@@ -1004,7 +985,7 @@ export const MONITOR_GRAPH_COLORS = [
   },
   {
     get nameI18nKey() {
-      return t('Cool Color')
+      return t('COOL_COLORS')
     },
     colors: [
       '#678ed7',
@@ -1018,7 +999,7 @@ export const MONITOR_GRAPH_COLORS = [
   },
   {
     get nameI18nKey() {
-      return t('Warm Color')
+      return t('WARM_COLORS')
     },
     colors: [
       '#717adf',

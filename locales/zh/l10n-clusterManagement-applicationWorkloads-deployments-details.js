@@ -23,6 +23,7 @@ module.exports = {
   // More > Edit Autoscaling
   // More > Edit Settings > Update Strategy
   // More > Edit Settings > Containers
+  EDIT_CONTAINER: '编辑容器',
   // More > Edit Settings > Volumes
   // More > Edit Settings > Pod Scheduling Rules
   // More > Edit YAML
@@ -33,6 +34,7 @@ module.exports = {
   // Resource Status > Replica Status
   // Resource Status > Ports
   // Resource Status > Pods
+  NODE: '节点',
   // Revision Records
   SERIAL_NUMBER: '序列号',
   CREATED_TIME: '创建于 {diff}',
@@ -40,5 +42,7 @@ module.exports = {
   // Monitoring
   // Environment Variables
   // Events
-  EVENT_PL: '事件'
+  EVENT_PL: '事件',
+  EVENT_NORMAL: '正常',
+  EVENT_WARNING: '一般告警'
 };

@@ -98,7 +98,9 @@ export default class CDStore extends Base {
 
     const url = `${this.getResourceUrl({ namespace: devops, cluster })}`
 
-    const result = await request.get(url, { ...params }, {}, () => {})
+    const result = await request.get(url, { ...params }, {}, () => {
+      return []
+    })
 
     const data = Array.isArray(result.items)
       ? result.items.map(item => {
@@ -183,7 +185,7 @@ export default class CDStore extends Base {
   }
 
   @action
-  async getClustersList() {
+  async getClustersList(defaultHost = 'host') {
     const url = `${this.apiVersion}/clusters`
     const result = await request.get(url, null, null, () => {
       return []
@@ -200,7 +202,7 @@ export default class CDStore extends Base {
         has(item, 'metadata.labels["cluster-role.kubesphere.io/host"]')
       )
 
-      hostName = get(cluster, 'metadata.name', 'host')
+      hostName = get(cluster, 'metadata.name', defaultHost)
     }
 
     if (isEmpty(result)) {
